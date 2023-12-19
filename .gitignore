@@ -1,0 +1,7 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+# Generated files
+*.o
+*.elf
+dv/sv/mem/

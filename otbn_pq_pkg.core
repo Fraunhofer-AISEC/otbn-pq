@@ -1,0 +1,22 @@
+CAPI=2:
+# Copyright lowRISC contributors.
+# Copyright Fraunhofer Institute for Applied and Integrated Security (AISEC).
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+name: "aisec:ip:otbn_pq_pkg:0.1"
+description: "Constants used by OTBN"
+
+filesets:
+  files_pkg:
+    depend:
+      - lowrisc:prim:assert
+      - lowrisc:ip:otp_ctrl_pkg
+    files:
+      - rtl/otbn_pkg.sv
+      - rtl/otbn_pq_pkg.sv
+    file_type: systemVerilogSource
+
+targets:
+  default:
+    filesets:
+      - files_pkg

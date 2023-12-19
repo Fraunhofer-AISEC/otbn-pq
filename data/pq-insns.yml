@@ -1,0 +1,873 @@
+# Copyright Fraunhofer Institute for Applied and Integrated Security (AISEC).
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+
+- mnemonic: pq.add
+  synopsis: Add
+  operands: &pq-add-operands
+    - &pq-wrd-add
+      name: wrd
+      doc: Destination WDR
+    - &pq-wrd-wsel-add
+      name: wrd_wsel
+      abbrev: wseld
+      type: uimm3
+      doc: |
+        Word select for `<wrd>`.
+
+        Valid values:
+        - `0`: Select `wrs1[WLEN/8-1:0]` (least significant word)
+        - `1`: Select `wrs1[WLEN/8*2-1:WLEN/8]`
+        - `2`: Select `wrs1[WLEN/8*3-1:WLEN/8*2]`
+        - `3`: Select `wrs1[WLEN/8*4-1:WLEN/8*3]`
+        - `4`: Select `wrs1[WLEN/8*5-1:WLEN/8*4]`
+        - `5`: Select `wrs1[WLEN/8*6-1:WLEN/8*5]`
+        - `6`: Select `wrs1[WLEN/8*7-1:WLEN/8*6]`
+        - `7`: Select `wrs1[WLEN-1:WLEN/8*7]` (most significant word)
+    - &pq-wrs1-add
+      name: wrs1
+      doc: First source WDR
+    - &pq-wrs1-wsel-add
+      name: wrs1_wsel
+      abbrev: wsel1
+      type: uimm3
+      doc: |
+        Word select for `<wrs1>`.
+
+        Valid values:
+        - `0`: Select `wrs1[WLEN/8-1:0]` (least significant word)
+        - `1`: Select `wrs1[WLEN/8*2-1:WLEN/8]`
+        - `2`: Select `wrs1[WLEN/8*3-1:WLEN/8*2]`
+        - `3`: Select `wrs1[WLEN/8*4-1:WLEN/8*3]`
+        - `4`: Select `wrs1[WLEN/8*5-1:WLEN/8*4]`
+        - `5`: Select `wrs1[WLEN/8*6-1:WLEN/8*5]`
+        - `6`: Select `wrs1[WLEN/8*7-1:WLEN/8*6]`
+        - `7`: Select `wrs1[WLEN-1:WLEN/8*7]` (most significant word)
+    - &pq-wrs2-add
+      name: wrs2
+      doc: Second source WDR
+    - &pq-wrs2-wsel-add
+      name: wrs2_wsel
+      abbrev: wsel2
+      type: uimm3
+      doc: |
+        Word select for `<wrs2>`.
+
+        Valid values:
+        - `0`: Select `wrs1[WLEN/8-1:0]` (least significant word)
+        - `1`: Select `wrs1[WLEN/8*2-1:WLEN/8]`
+        - `2`: Select `wrs1[WLEN/8*3-1:WLEN/8*2]`
+        - `3`: Select `wrs1[WLEN/8*4-1:WLEN/8*3]`
+        - `4`: Select `wrs1[WLEN/8*5-1:WLEN/8*4]`
+        - `5`: Select `wrs1[WLEN/8*6-1:WLEN/8*5]`
+        - `6`: Select `wrs1[WLEN/8*7-1:WLEN/8*6]`
+        - `7`: Select `wrs1[WLEN-1:WLEN/8*7]` (most significant word)
+  syntax: &pq-add-syntax |
+    <wrd>.<wrd_wsel>, <wrs1>.<wrs1_wsel>, <wrs2>.<wrs2_wsel>
+  doc: |
+    Adds two PQR values, writes the result to the destination PQR. 
+  encoding:
+    scheme: pqadd
+    mapping:
+      wrs2_wsel: wrs2_wsel
+      wrs1_wsel: wrs1_wsel
+      wrs2: wrs2
+      wrs1: wrs1
+      wrd_wsel: wrd_wsel
+      wrd: wrd
+
+
+
+- mnemonic: pq.add.ind
+  synopsis: Add (indirect register address)
+  operands: &pq-operands-indirect
+    - &pq-update-m
+      name: update_m
+      doc: Update m (m = m >> 1)
+      type: uimm1
+    - &pq-update-j2
+      name: update_j2
+      doc: Update j2 (j2 = j2 << 1)
+      type: uimm1
+    - &pq-update-j
+      name: update_j
+      doc: Update j (j = j + 1)
+      type: uimm1
+    - &pq-set-idx
+      name: set_idx
+      doc: set indices (idx0 = br(j), idx1 = br(j) + m)
+      type: uimm1
+    - &pq-inc-idx
+      name: inc_idx
+      doc: increment indices (idx0 = idx0 + 1, idx1 = idx1 + 1)
+      type: uimm1
+  syntax: &pq-ind-syntax |
+    <update_m>, <update_j2>, <update_j>, <set_idx>, <inc_idx>
+  doc: |
+    Applies indirect Add operation to the source PQRs which are address indirectly.
+    The result is written in the first source PQR.
+  encoding:
+    scheme: pqaddind
+    mapping:
+      m: update_m
+      j2: update_j2
+      j: update_j
+      set_idx: set_idx
+      inc_idx: inc_idx
+
+- mnemonic: pq.addi.ind
+  synopsis: Add (indirect register address)
+  operands: &pq-operands-indirect-imm
+    - &pq-imm
+      name: imm
+      doc: Immediate value (-1024 to 1024)
+      type: uimm11   
+    - &pq-update-m-imm
+      name: update_m
+      doc: Update m (m = m >> 1)
+      type: uimm1
+    - &pq-update-j2-imm
+      name: update_j2
+      doc: Update j2 (j2 = j2 << 1)
+      type: uimm1
+    - &pq-update-j-imm
+      name: update_j
+      doc: Update j (j = j + 1)
+      type: uimm1
+    - &pq-set-idx-imm
+      name: set_idx
+      doc: set indices (idx0 = br(j), idx1 = br(j) + m)
+      type: uimm1
+    - &pq-inc-idx-imm
+      name: inc_idx
+      doc: increment indices (idx0 = idx0 + 1, idx1 = idx1 + 1)
+      type: uimm1
+  syntax: &pq-ind-imm-syntax |
+    <imm>, <update_m>, <update_j2>, <update_j>, <set_idx>, <inc_idx>
+  doc: |
+    Applies indirect Add operation to the source PQRs which are address indirectly.
+    The result is written in the first source PQR.
+  encoding:
+    scheme: pqaddiind
+    mapping:
+      imm: imm
+      m: update_m
+      j2: update_j2
+      j: update_j
+      set_idx: set_idx
+      inc_idx: inc_idx
+
+- mnemonic: pq.sub
+  synopsis: Sub
+  operands: &pq-sub-operands
+    - &pq-wrd-sub
+      name: wrd
+      doc: Destination WDR
+    - &pq-wrd-wsel-sub
+      name: wrd_wsel
+      abbrev: wseld
+      type: uimm3
+      doc: |
+        Word select for `<wrd>`.
+
+        Valid values:
+        - `0`: Select `wrs1[WLEN/8-1:0]` (least significant word)
+        - `1`: Select `wrs1[WLEN/8*2-1:WLEN/8]`
+        - `2`: Select `wrs1[WLEN/8*3-1:WLEN/8*2]`
+        - `3`: Select `wrs1[WLEN/8*4-1:WLEN/8*3]`
+        - `4`: Select `wrs1[WLEN/8*5-1:WLEN/8*4]`
+        - `5`: Select `wrs1[WLEN/8*6-1:WLEN/8*5]`
+        - `6`: Select `wrs1[WLEN/8*7-1:WLEN/8*6]`
+        - `7`: Select `wrs1[WLEN-1:WLEN/8*7]` (most significant word)
+    - &pq-wrs1-sub
+      name: wrs1
+      doc: First source WDR
+    - &pq-wrs1-wsel-sub
+      name: wrs1_wsel
+      abbrev: wsel1
+      type: uimm3
+      doc: |
+        Word select for `<wrs1>`.
+
+        Valid values:
+        - `0`: Select `wrs1[WLEN/8-1:0]` (least significant word)
+        - `1`: Select `wrs1[WLEN/8*2-1:WLEN/8]`
+        - `2`: Select `wrs1[WLEN/8*3-1:WLEN/8*2]`
+        - `3`: Select `wrs1[WLEN/8*4-1:WLEN/8*3]`
+        - `4`: Select `wrs1[WLEN/8*5-1:WLEN/8*4]`
+        - `5`: Select `wrs1[WLEN/8*6-1:WLEN/8*5]`
+        - `6`: Select `wrs1[WLEN/8*7-1:WLEN/8*6]`
+        - `7`: Select `wrs1[WLEN-1:WLEN/8*7]` (most significant word)
+    - &pq-wrs2-sub
+      name: wrs2
+      doc: Second source WDR
+    - &pq-wrs2-wsel-sub
+      name: wrs2_wsel
+      abbrev: wsel2
+      type: uimm3
+      doc: |
+        Word select for `<wrs2>`.
+
+        Valid values:
+        - `0`: Select `wrs1[WLEN/8-1:0]` (least significant word)
+        - `1`: Select `wrs1[WLEN/8*2-1:WLEN/8]`
+        - `2`: Select `wrs1[WLEN/8*3-1:WLEN/8*2]`
+        - `3`: Select `wrs1[WLEN/8*4-1:WLEN/8*3]`
+        - `4`: Select `wrs1[WLEN/8*5-1:WLEN/8*4]`
+        - `5`: Select `wrs1[WLEN/8*6-1:WLEN/8*5]`
+        - `6`: Select `wrs1[WLEN/8*7-1:WLEN/8*6]`
+        - `7`: Select `wrs1[WLEN-1:WLEN/8*7]` (most significant word)
+  syntax: *pq-add-syntax
+  doc: |
+    Subtracts the second PQR value from the first one, writes the result to the destination PQR.
+  encoding:
+    scheme: pqsub
+    mapping:
+      wrs2_wsel: wrs2_wsel
+      wrs1_wsel: wrs1_wsel
+      wrs2: wrs2
+      wrs1: wrs1
+      wrd_wsel: wrd_wsel
+      wrd: wrd
+
+
+- mnemonic: pq.sub.ind
+  synopsis: Sub (indirect register address)
+  operands: *pq-operands-indirect
+  syntax: *pq-ind-syntax
+  doc: |
+    Applies indirect Sub operation to the source PQRs which are address indirectly.
+    The result is written in the first source PQR.
+  encoding:
+    scheme: pqsubind
+    mapping:
+      m: update_m
+      j2: update_j2
+      j: update_j
+      set_idx: set_idx
+      inc_idx: inc_idx
+
+
+- mnemonic: pq.subi.ind
+  synopsis: Sub (indirect register address)
+  operands: *pq-operands-indirect-imm
+  syntax: *pq-ind-imm-syntax
+  doc: |
+    Applies indirect Sub operation to the source PQRs which are address indirectly.
+    The result is written in the first source PQR.
+  encoding:
+    scheme: pqsubiind
+    mapping:
+      imm: imm
+      m: update_m
+      j2: update_j2
+      j: update_j
+      set_idx: set_idx
+      inc_idx: inc_idx
+
+
+- mnemonic: pq.mul
+  synopsis: Montgomery Multiply
+  operands: *pq-add-operands
+  syntax: *pq-add-syntax
+  doc: |
+    Multiplies two PQR values followed by a montgomery reduction, 
+    writes the result to the destination PQR. 
+  encoding:
+    scheme: pqmul
+    mapping:
+      wrs2_wsel: wrs2_wsel
+      wrs1_wsel: wrs1_wsel
+      wrs2: wrs2
+      wrs1: wrs1
+      wrd_wsel: wrd_wsel
+      wrd: wrd
+
+
+- mnemonic: pq.mul.ind
+  synopsis: Add (indirect register address)
+  operands: *pq-operands-indirect
+  syntax: *pq-ind-syntax
+  doc: |
+    Applies indirect Multiply operation to the source PQRs which are address indirectly.
+    The result is written in the first source PQR.
+  encoding:
+    scheme: pqmulind
+    mapping:
+      m: update_m
+      j2: update_j2
+      j: update_j
+      set_idx: set_idx
+      inc_idx: inc_idx
+
+
+- mnemonic: pq.scale.ind
+  synopsis: Add (indirect register address)
+  operands: *pq-operands-indirect
+  syntax: *pq-ind-syntax
+  doc: |
+    Applies indirect Scaling operation to one source PQR which is address indirectly. 
+    The content of the source PQR is scaled with a constant specified in the Const-PQSPR.
+    The result is written back into the source PQR.
+  encoding:
+    scheme: pqscaleind
+    mapping:
+      m: update_m
+      j2: update_j2
+      j: update_j
+      set_idx: set_idx
+      inc_idx: inc_idx
+
+
+- mnemonic: pq.ctbf
+  synopsis: Cooley-Tukey Butterfly
+  operands: &pq-bf-operands
+    - &pq-wrs1-ctbf
+      name: wrs1
+      doc: First source WDR
+    - &pq-wrs1-wsel-ctbf
+      name: wrs1_wsel
+      abbrev: wsel1
+      type: uimm3
+      doc: |
+        Word select for `<wrs1>`.
+
+        Valid values:
+        - `0`: Select `wrs1[WLEN/8-1:0]` (least significant word)
+        - `1`: Select `wrs1[WLEN/8*2-1:WLEN/8]`
+        - `2`: Select `wrs1[WLEN/8*3-1:WLEN/8*2]`
+        - `3`: Select `wrs1[WLEN/8*4-1:WLEN/8*3]`
+        - `4`: Select `wrs1[WLEN/8*5-1:WLEN/8*4]`
+        - `5`: Select `wrs1[WLEN/8*6-1:WLEN/8*5]`
+        - `6`: Select `wrs1[WLEN/8*7-1:WLEN/8*6]`
+        - `7`: Select `wrs1[WLEN-1:WLEN/8*7]` (most significant word)
+    - &pq-wrs2-ctbf
+      name: wrs2
+      doc: Second source WDR
+    - &pq-wrs2-wsel-ctbf
+      name: wrs2_wsel
+      abbrev: wsel2
+      type: uimm3
+      doc: |
+        Word select for `<wrs2>`.
+
+        Valid values:
+        - `0`: Select `wrs1[WLEN/8-1:0]` (least significant word)
+        - `1`: Select `wrs1[WLEN/8*2-1:WLEN/8]`
+        - `2`: Select `wrs1[WLEN/8*3-1:WLEN/8*2]`
+        - `3`: Select `wrs1[WLEN/8*4-1:WLEN/8*3]`
+        - `4`: Select `wrs1[WLEN/8*5-1:WLEN/8*4]`
+        - `5`: Select `wrs1[WLEN/8*6-1:WLEN/8*5]`
+        - `6`: Select `wrs1[WLEN/8*7-1:WLEN/8*6]`
+        - `7`: Select `wrs1[WLEN-1:WLEN/8*7]` (most significant word)
+    - &pq-twiddle-update-ctbf
+      name: twiddle
+      type: uimm
+      doc: Update twiddle register
+    - &pq-omega-update-ctbf
+      name: omega
+      type: uimm
+      doc: Update omega register
+    - &pq-psi-update-ctbf
+      name: psi
+      type: uimm
+      doc: Update psi register
+  syntax: &pq-bf-syntax |
+    <wrs1>.<wrs1_wsel>, <wrs2>.<wrs2_wsel>[, <twiddle>, <omega>, <psi>]
+  doc: |
+    Applies in-place Cooley-Tukey Butterfly operation to the source PQRs.
+    Requires twiddle-factor in montgomery domain. 
+  encoding:
+    scheme: pqctb
+    mapping:
+      wrs2_wsel: wrs2_wsel
+      wrs1_wsel: wrs1_wsel
+      wrs2: wrs2
+      wrs1: wrs1
+      twiddle: twiddle
+      omega: omega
+      psi: psi
+
+
+- mnemonic: pq.ctbf.ind
+  synopsis: Cooley-Tukey Butterfly (indirect register address)
+  operands: &pq-bf-operands-indirect
+    - *pq-twiddle-update-ctbf
+    - *pq-omega-update-ctbf
+    - *pq-psi-update-ctbf
+    - &pq-update-m-ctbf
+      name: update_m
+      doc: Update m (m = m >> 1)
+      type: uimm1
+    - &pq-update-j2-ctbf
+      name: update_j2
+      doc: Update j2 (j2 = j2 << 1)
+      type: uimm1
+    - &pq-update-j-ctbf
+      name: update_j
+      doc: Update j (j = j + 1)
+      type: uimm1
+    - &pq-set-idx-ctbf
+      name: set_idx
+      doc: set indices (idx0 = br(j), idx1 = br(j) + m)
+      type: uimm1
+    - &pq-inc-idx-ctbf
+      name: inc_idx
+      doc: increment indices (idx0 = idx0 + 1, idx1 = idx1 + 1)
+      type: uimm1
+  syntax: &pq-bf-ind-syntax |
+    <update_m>, <update_j2>, <update_j>, <set_idx>, <inc_idx>[, <twiddle>, <omega>, <psi>]
+  doc: |
+    Applies in-place Cooley-Tukey Butterfly operation to the source PQRs which are address indirectly.
+    Requires twiddle-factor in montgomery domain. 
+  encoding:
+    scheme: pqctbind
+    mapping:
+      twiddle: twiddle
+      omega: omega
+      psi: psi
+      m: update_m
+      j2: update_j2
+      j: update_j
+      set_idx: set_idx
+      inc_idx: inc_idx
+
+
+- mnemonic: pq.gsbf.ind
+  synopsis: Gentlemen-Sande Butterfly (indirect register address)
+  operands: *pq-bf-operands-indirect
+  syntax: *pq-bf-ind-syntax
+  doc: |
+    Applies in-place Gentlemen-Sande Butterfly operation to the source PQRs which are address indirectly.
+    Requires twiddle-factor in montgomery domain. 
+  encoding:
+    scheme: pqgsbind
+    mapping:
+      twiddle: twiddle
+      omega: omega
+      psi: psi
+      m: update_m
+      j2: update_j2
+      j: update_j
+      set_idx: set_idx
+      inc_idx: inc_idx
+
+
+- mnemonic: pq.gsbf
+  synopsis: Gentlemen-Sande Butterfly
+  operands: *pq-bf-operands
+  syntax: *pq-bf-syntax
+  doc: |
+    Applies in-place Gentlemen-Sande Butterfly operation to the source PQRs. 
+    Requires twiddle-factor in montgomery domain. 
+  encoding:
+    scheme: pqgsb
+    mapping:
+      wrs2_wsel: wrs2_wsel
+      wrs1_wsel: wrs1_wsel
+      wrs2: wrs2
+      wrs1: wrs1
+      twiddle: twiddle
+      omega: omega
+      psi: psi
+
+
+- mnemonic: pq.br
+  synopsis: Bitreverse
+  operands:
+    - name: grd
+      doc: Destination GPR
+    - name: grs1
+      doc: The GPR to read
+    - name: nof_bits
+      type: uimm4
+      doc: Specifies the length of the bit-string which should be reversed
+  syntax: 
+    <grd>, <grs1>, <nof_bits>
+  doc: |
+    Reads a GPR and applies a bitreverse operation on the content and saves it in the destination GPR.
+    The length of the bitstring which is bitreversed is specified by `nof_bits`
+  encoding:  
+    scheme: pqbr
+    mapping:
+      nof_bit: nof_bits
+      rs1: grs1
+      rd: grd
+
+- mnemonic: pq.pqsrr
+  synopsis: Read PQSR to register
+  operands:
+    - name: wrd
+      doc: Destination WDR
+    - name: wsr
+      doc: The PQSR to read
+  doc: |
+    Reads a PQSR to a WDR.
+    If `pqsr` isn't the index of a valid PQSR, this halts with an error (TODO: Implement and Specify error code).
+  encoding:
+    scheme: pqsrwr
+    mapping:
+      write: b0
+      pqsr: wsr
+      wrs: bxxxxx
+      wrd: wrd
+  lsu:
+    type: wsr-load
+    target: [wsr]
+
+- mnemonic: pq.pqsrw
+  synopsis: Write PQSR from register
+  operands: [wsr, wrs]
+  operands:
+    - name: wsr
+      doc: The PQSR to read
+    - name: wrs
+      doc: Source WDR
+  doc: |
+    Writes a WDR to a PQSR.
+    If `pqsr` isn't the index of a valid PQSR, this halts with an error (TODO: Implement and Specify error code).
+  encoding:
+    scheme: pqsrwr
+    mapping:
+      write: b1
+      pqsr: wsr
+      wrs: wrs
+      wrd: bxxxxx
+  lsu:
+    type: wsr-store
+    target: [wsr]
+
+
+- mnemonic: pq.srw
+  synopsis: Write PQSR from register
+  operands: [wsr, grs1]
+  operands:
+    - name: wsr
+      doc: The PQSR to read
+    - name: grs1
+      doc: Source WDR
+  doc: |
+    Writes a WDR to a PQSR.
+    If `pqsr` isn't the index of a valid PQSR, this halts with an error (TODO: Implement and Specify error code).
+  encoding:
+    scheme: pqsrbasewr
+    mapping:
+      write: b1
+      pqsr: wsr
+      rs: grs1
+      rd: bxxxxx
+  lsu:
+    type: wsr-store
+    target: [wsr]
+
+- mnemonic: pq.srr
+  synopsis: Read PQSR to register
+  operands:
+    - name: grd
+      doc: Destination WDR
+    - name: wsr
+      doc: The PQSR to read
+  doc: |
+    Reads a PQSR to a WDR.
+    If `pqsr` isn't the index of a valid PQSR, this halts with an error (TODO: Implement and Specify error code).
+  encoding:
+    scheme: pqsrbasewr
+    mapping:
+      write: b0
+      pqsr: wsr
+      rs: bxxxxx
+      rd: grd
+  lsu:
+    type: wsr-load
+    target: [wsr]
+
+
+- mnemonic: pq.pqsru
+  synopsis: Update PQSR
+  operands: &pq-psqru-operands
+    - &pq-idx-omega-inc
+      name: idx_omega_inc
+      doc: Increment selection index of omega register
+      type: uimm1
+    - &pq-idx-psi-inc
+      name: idx_psi_inc
+      doc: Increment selection index of psi register
+      type: uimm1
+    - &pq-set-twiddle-as-psi
+      name: set_twiddle_as_psi
+      doc: Set twiddle register as selected psi value
+      type: uimm1
+    - &pq-invert-twiddle
+      name: invert_twiddle
+      doc: Invert (additively) current twiddle factor (twiddle = prime - twiddle)
+      type: uimm1
+    - &pq-update-twiddle
+      name: update_twiddle
+      doc: Update twiddle factor (twiddle = twiddle * omega)
+      type: uimm1
+    - &pq-update-omega
+      name: update_omega
+      doc: Update omega (omega = omega * omega)
+      type: uimm1
+    - &pq-update-psi
+      name: update_psi
+      doc: Update psi (psi = omega)
+      type: uimm1
+    - *pq-update-m
+    - *pq-update-j2
+    - *pq-update-j
+    - *pq-set-idx
+    - *pq-inc-idx
+
+  syntax: &pq-pqsru-syntax |
+    <update_psi>, <update_omega>, <update_twiddle>, <invert_twiddle>, <set_twiddle_as_psi>, <idx_psi_inc>, <idx_omega_inc>[, <update_m>, <update_j2>, <update_j>, <set_idx>, <inc_idx>]
+  doc: |
+    Updates PQSR accordingly (TODO: Specify valid values and errors)
+  encoding:
+    scheme: pqsru
+    mapping:
+      inc_idx_omega: idx_omega_inc
+      inc_idx_psi: idx_psi_inc
+      set_twiddle_as_psi: set_twiddle_as_psi
+      inv_twiddle: invert_twiddle
+      twiddle: update_twiddle
+      omega: update_omega
+      psi: update_psi
+      m: update_m
+      j2: update_j2
+      j: update_j
+      set_idx: set_idx
+      inc_idx: inc_idx
+
+- mnemonic: pq.xor
+  synopsis: XOR
+  operands: &pq-xor-operands
+    - &pq-wrd-xor
+      name: wrd
+      doc: Destination WDR
+    - &pq-wrd-wsel-xor
+      name: wrd_wsel
+      abbrev: wseld
+      type: uimm2
+      doc: |
+        Word select for `<wrd>`.
+
+        Valid values:
+        - `0`: Select `wrs1[WLEN/4-1:0]` (least significant word)
+        - `1`: Select `wrs1[WLEN/4*2-1:WLEN/4]`
+        - `2`: Select `wrs1[WLEN/4*3-1:WLEN/4*2]`
+        - `3`: Select `wrs1[WLEN-1:WLEN/4*3]` (most significant word)
+    - &pq-wrs1-xor
+      name: wrs1
+      doc: First source WDR
+    - &pq-wrs1-wsel-xor
+      name: wrs1_wsel
+      abbrev: wsel1
+      type: uimm2
+      doc: |
+        Word select for `<wrs1>`.
+
+        Valid values:
+        - `0`: Select `wrs1[WLEN/4-1:0]` (least significant word)
+        - `1`: Select `wrs1[WLEN/4*2-1:WLEN/4]`
+        - `2`: Select `wrs1[WLEN/4*3-1:WLEN/4*2]`
+        - `3`: Select `wrs1[WLEN-1:WLEN/4*3]` (most significant word)
+    - &pq-wrs2-xor
+      name: wrs2
+      doc: Second source WDR
+    - &pq-wrs2-wsel-xor
+      name: wrs2_wsel
+      abbrev: wsel2
+      type: uimm2
+      doc: |
+        Word select for `<wrs2>`.
+
+        Valid values:
+        - `0`: Select `wrs1[WLEN/4-1:0]` (least significant word)
+        - `1`: Select `wrs1[WLEN/4*2-1:WLEN/4]`
+        - `2`: Select `wrs1[WLEN/4*3-1:WLEN/4*2]`
+        - `3`: Select `wrs1[WLEN-1:WLEN/4*3]` (most significant word)
+        
+  syntax: &pq-xor-syntax |
+    <wrd>.<wrd_wsel>, <wrs1>.<wrs1_wsel>, <wrs2>.<wrs2_wsel>
+  doc: |
+    Xors two PQR values, writes the result to the destination PQR. 
+  encoding:
+    scheme: pqxor
+    mapping:
+      wrs2_wsel: wrs2_wsel
+      wrs1_wsel: wrs1_wsel
+      wrs2: wrs2
+      wrs1: wrs1
+      wrd_wsel: wrd_wsel
+      wrd: wrd
+
+- mnemonic: pq.xorr
+  synopsis: XORR
+  operands: &pq-xorr-operands
+    - &pq-wrd-xorr
+      name: wrd
+      doc: Destination WDR
+    - &pq-wrd-wsel-xorr
+      name: wrd_wsel
+      abbrev: wseld
+      type: uimm2
+      doc: |
+        Word select for `<wrd>`.
+
+        Valid values:
+        - `0`: Select `wrs1[WLEN/4-1:0]` (least significant word)
+        - `1`: Select `wrs1[WLEN/4*2-1:WLEN/4]`
+        - `2`: Select `wrs1[WLEN/4*3-1:WLEN/4*2]`
+        - `3`: Select `wrs1[WLEN-1:WLEN/4*3]` (most significant word)
+    - &pq-wrs1-xorr
+      name: wrs1
+      doc: First source WDR
+    - &pq-wrs1-wsel-xorr
+      name: wrs1_wsel
+      abbrev: wsel1
+      type: uimm2
+      doc: |
+        Word select for `<wrs1>`.
+
+        Valid values:
+        - `0`: Select `wrs1[WLEN/4-1:0]` (least significant word)
+        - `1`: Select `wrs1[WLEN/4*2-1:WLEN/4]`
+        - `2`: Select `wrs1[WLEN/4*3-1:WLEN/4*2]`
+        - `3`: Select `wrs1[WLEN-1:WLEN/4*3]` (most significant word)
+    - &pq-wrs2-xorr
+      name: wrs2
+      doc: Second source WDR
+    - &pq-wrs2-wsel-xorr
+      name: wrs2_wsel
+      abbrev: wsel2
+      type: uimm2
+      doc: |
+        Word select for `<wrs2>`.
+
+        Valid values:
+        - `0`: Select `wrs1[WLEN/4-1:0]` (least significant word)
+        - `1`: Select `wrs1[WLEN/4*2-1:WLEN/4]`
+        - `2`: Select `wrs1[WLEN/4*3-1:WLEN/4*2]`
+        - `3`: Select `wrs1[WLEN-1:WLEN/4*3]` (most significant word)
+    - &pq-x-inc
+      name: inc_x
+      doc: Increment the value of x
+      type: uimm1
+    - &pq-y-inc
+      name: inc_y
+      doc: Increment the value of y
+      type: uimm1        
+  syntax: &pq-xorr-syntax |
+    <wrd>.<wrd_wsel>, <wrs1>.<wrs1_wsel>, <wrs2>.<wrs2_wsel>[, <inc_x>, <inc_y>]
+  doc: |
+    Xors two PQR values and rotates the result, which is written to the destination PQR. 
+  encoding:
+    scheme: pqxorr
+    mapping:
+      wrs2_wsel: wrs2_wsel
+      wrs1_wsel: wrs1_wsel
+      wrs2: wrs2
+      wrs1: wrs1
+      wrd_wsel: wrd_wsel
+      wrd: wrd
+      inc_x: inc_x
+      inc_y: inc_y
+
+- mnemonic: pq.ioata
+  synopsis: IOTA
+  operands: &pq-ioata-operands
+    - &pq-wrd-ioata
+      name: wrd
+      doc: Destination WDR
+    - &pq-wrd-wsel-ioata
+      name: wrd_wsel
+      abbrev: wseld
+      type: uimm2
+      doc: |
+        Word select for `<wrd>`.
+
+        Valid values:
+        - `0`: Select `wrs1[WLEN/4-1:0]` (least significant word)
+        - `1`: Select `wrs1[WLEN/4*2-1:WLEN/4]`
+        - `2`: Select `wrs1[WLEN/4*3-1:WLEN/4*2]`
+        - `3`: Select `wrs1[WLEN-1:WLEN/4*3]` (most significant word)
+    - &pq-wrs1-ioata
+      name: wrs1
+      doc: First source WDR
+    - &pq-wrs1-wsel-ioata
+      name: wrs1_wsel
+      abbrev: wsel1
+      type: uimm2
+      doc: |
+        Word select for `<wrs1>`.
+
+        Valid values:
+        - `0`: Select `wrs1[WLEN/4-1:0]` (least significant word)
+        - `1`: Select `wrs1[WLEN/4*2-1:WLEN/4]`
+        - `2`: Select `wrs1[WLEN/4*3-1:WLEN/4*2]`
+        - `3`: Select `wrs1[WLEN-1:WLEN/4*3]` (most significant word)
+    - &pq-wrs2-ioata
+      name: wrs2
+      doc: Second source WDR
+    - &pq-wrs2-wsel-ioata
+      name: wrs2_wsel
+      abbrev: wsel2
+      type: uimm2
+      doc: |
+        Word select for `<wrs2>`.
+
+        Valid values:
+        - `0`: Select `wrs1[WLEN/4-1:0]` (least significant word)
+        - `1`: Select `wrs1[WLEN/4*2-1:WLEN/4]`
+        - `2`: Select `wrs1[WLEN/4*3-1:WLEN/4*2]`
+        - `3`: Select `wrs1[WLEN-1:WLEN/4*3]` (most significant word)
+    - &pq-rc-inc
+      name: inc_rc
+      doc: Increment the value of RC
+      type: uimm1       
+  syntax: &pq-iota-syntax |
+    <wrd>.<wrd_wsel>, <wrs1>.<wrs1_wsel>, <wrs2>.<wrs2_wsel>[, <inc_rc>]
+  doc: |
+    Xors one PQR value with the RC value. The result is written to the destination PQR. 
+  encoding:
+    scheme: pqiota
+    mapping:
+      wrs2_wsel: wrs2_wsel
+      wrs1_wsel: wrs1_wsel
+      wrs2: wrs2
+      wrs1: wrs1
+      wrd_wsel: wrd_wsel
+      wrd: wrd
+      inc_rc: inc_rc
+
+- mnemonic: pq.parity
+  synopsis: PARITY
+  operands: &pq-parity-operands
+    - &pq-wrs1-parity
+      name: wrs1
+      doc: First source WDR
+    - &pq-wrs2-parity
+      name: wrs2
+      doc: Second source WDR     
+  syntax: &pq-parity-syntax |
+    <wrs1>, <wrs2>
+  doc: |
+    Theta parity operation applied to all words of the first source WDR and the first quarter word of the second WDR.
+  encoding:
+    scheme: pqparity
+    mapping:
+      wrs2: wrs2
+      wrs1: wrs1
+     
+- mnemonic: pq.chi
+  synopsis: CHI
+  operands: *pq-parity-operands
+  syntax: *pq-parity-syntax
+  doc: |
+    Chi operation applied to all words of the first source WDR and the first quarter word of the second WDR.
+  encoding:
+    scheme: pqchi
+    mapping:
+      wrs2: wrs2
+      wrs1: wrs1

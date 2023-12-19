@@ -1,0 +1,226 @@
+CAPI=2:
+# Copyright lowRISC contributors.
+# Copyright Fraunhofer Institute for Applied and Integrated Security (AISEC).
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+name: "aisec:ip:otbn_pq:0.1"
+description: "OpenTitan Big Number Accelerator with PQ Extension(OTBN-PQ)"
+
+filesets:
+  files_rtl_pq:
+    depend:
+      - aisec:ip:otbn_pq_pkg:0.1
+    files:
+      - rtl/adder.sv
+      - rtl/subtractor.sv
+      - rtl/bitreverse.sv
+      - rtl/multiplier.sv
+      - rtl/reg_addr_unit.sv
+      - rtl/twiddle_update.sv
+      - rtl/pq_alu.sv
+      - rtl/keccak_lane_unit.sv
+      - rtl/keccak_plane_unit.sv
+    file_type: systemVerilogSource
+
+  files_rtl_core:
+    depend:
+      - lowrisc:prim:assert
+      - lowrisc:prim:util
+      - lowrisc:prim:lfsr
+      - lowrisc:prim:xoshiro256pp
+      - lowrisc:prim:cipher_pkg
+      - lowrisc:prim:mubi
+      - lowrisc:prim:crc32
+      - lowrisc:prim:sparse_fsm
+      - lowrisc:prim:onehot
+      - lowrisc:prim:blanker
+      - lowrisc:ip:keymgr_pkg
+      - lowrisc:ip:edn_pkg
+      - lowrisc:prim:onehot_check
+      - aisec:ip:otbn_pq_pkg:0.1
+    files:
+      - rtl/otbn_controller.sv
+      - rtl/otbn_decoder.sv
+      - rtl/otbn_predecode.sv
+      - rtl/otbn_instruction_fetch.sv
+      - rtl/otbn_rf_base.sv
+      - rtl/otbn_rf_bignum.sv
+      - rtl/otbn_rf_base_ff.sv
+      - rtl/otbn_rf_bignum_ff.sv
+      - rtl/otbn_rf_base_fpga.sv
+      - rtl/otbn_rf_bignum_fpga.sv
+      - rtl/otbn_lsu.sv
+      - rtl/otbn_alu_base.sv
+      - rtl/otbn_alu_bignum.sv
+      - rtl/otbn_mac_bignum.sv
+      - rtl/otbn_loop_controller.sv
+      - rtl/otbn_stack.sv
+      - rtl/otbn_rnd.sv
+      - rtl/otbn_start_stop_control.sv
+      - rtl/otbn_core.sv
+    file_type: systemVerilogSource
+
+  files_rtl_top:
+    depend:
+      - lowrisc:ip:tlul
+      - lowrisc:prim:all
+      - lowrisc:prim:assert
+      - lowrisc:prim:util
+      - lowrisc:prim:ram_1p_scr
+      - lowrisc:prim:lc_sync
+      - lowrisc:ip:edn_pkg
+      - lowrisc:prim:edn_req
+      - lowrisc:ip:otp_ctrl_pkg
+      - aisec:ip:otbn_pq_pkg:0.1
+    files:
+      - rtl/otbn_reg_pkg.sv
+      - rtl/otbn_reg_top.sv
+      - rtl/otbn_scramble_ctrl.sv
+      - rtl/otbn.sv
+    file_type: systemVerilogSource
+
+  files_rtl_tb:
+    files:
+      - dv/sv/tb_tl_ul_pkg.sv
+      - dv/sv/testcase0000.sv : {is_include_file : true}
+      - dv/sv/testcase0001.sv : {is_include_file : true}
+      - dv/sv/testcase0002.sv : {is_include_file : true}
+      - dv/sv/testcase0003.sv : {is_include_file : true}
+      - dv/sv/testcase0004.sv : {is_include_file : true}
+      - dv/sv/testcase0005.sv : {is_include_file : true}
+      - dv/sv/testcase0010.sv : {is_include_file : true}
+      - dv/sv/testcase0011.sv : {is_include_file : true}
+      - dv/sv/testcase0012.sv : {is_include_file : true}
+      - dv/sv/testcase0020.sv : {is_include_file : true}
+      - dv/sv/testcase0021.sv : {is_include_file : true}
+      - dv/sv/testcase0022.sv : {is_include_file : true}
+      - dv/sv/testcase0023.sv : {is_include_file : true}
+      - dv/sv/testcase0024.sv : {is_include_file : true}
+      - dv/sv/testcase0025.sv : {is_include_file : true}
+      - dv/sv/testcase0026.sv : {is_include_file : true}
+      - dv/sv/testcase0027.sv : {is_include_file : true}
+      - dv/sv/testcase0028.sv : {is_include_file : true}
+      - dv/sv/testcase0029.sv : {is_include_file : true}
+      - dv/sv/testcase0030.sv : {is_include_file : true}
+      - dv/sv/testcase0031.sv : {is_include_file : true}
+      - dv/sv/testcase0040.sv : {is_include_file : true}
+      - dv/sv/testcase0041.sv : {is_include_file : true}
+      - dv/sv/testcase0042.sv : {is_include_file : true}
+      - dv/sv/testcase0043.sv : {is_include_file : true}
+      - dv/sv/testcase0100.sv : {is_include_file : true}
+      - dv/sv/testcase0101.sv : {is_include_file : true}
+      - dv/sv/testcase0200.sv : {is_include_file : true}
+      - dv/sv/testcase0201.sv : {is_include_file : true}
+      - dv/sv/testcase0202.sv : {is_include_file : true}
+      - dv/sv/testcase0210.sv : {is_include_file : true}
+      - dv/sv/testcase0211.sv : {is_include_file : true}
+      - dv/sv/testcase0212.sv : {is_include_file : true}
+      - dv/sv/testcase1000-dilitium-ii-valid.sv : {is_include_file : true}
+      - dv/sv/testcase1001-dilitium-ii-invalid.sv : {is_include_file : true}
+      - dv/sv/testcase1002-dilitium-iii-valid.sv : {is_include_file : true}
+      - dv/sv/testcase1003-dilitium-iii-invalid.sv : {is_include_file : true}
+      - dv/sv/testcase1004-dilitium-v-valid.sv : {is_include_file : true}
+      - dv/sv/testcase1005-dilitium-v-invalid.sv : {is_include_file : true}
+      - dv/sv/tb_otbn.sv
+    file_type: systemVerilogSource
+
+
+  files_verilator_waiver:
+    depend:
+      # common waivers
+      - lowrisc:lint:common
+      - lowrisc:lint:comportable
+    files:
+      - lint/otbn.vlt
+    file_type: vlt
+
+  files_ascentlint_waiver:
+    depend:
+      # common waivers
+      - lowrisc:lint:common
+      - lowrisc:lint:comportable
+    files:
+      - lint/otbn.waiver
+    file_type: waiver
+
+  files_constraints:
+    files:
+      - syn/constraints.sdc
+    file_type: sdc
+
+parameters:
+  SYNTHESIS:
+    datatype: bool
+    paramtype: vlogdefine
+  OTBN_BUILD_MODEL:
+    datatype: bool
+    paramtype: vlogdefine
+    description: |
+      Build the simulation with the ISS as well as with the RTL implementation
+      (development only). Use the OTBN_USE_MODEL plusarg to switch at runtime.
+  OTBN_USE_MODEL:
+    datatype: bool
+    description: Use the OTBN model instead of the RTL implementation (development only)
+    paramtype: plusarg
+    default: false
+
+targets:
+  default: &default_target
+    filesets:
+      - tool_verilator ? (files_verilator_waiver)
+      - tool_ascentlint ? (files_ascentlint_waiver)
+      - files_rtl_pq
+      - files_rtl_core
+      - files_rtl_top
+    toplevel: otbn
+    parameters:
+      - OTBN_USE_MODEL
+      - OTBN_BUILD_MODEL
+
+  lint:
+    <<: *default_target
+    default_tool: verilator
+    parameters:
+      - SYNTHESIS=true
+    tools:
+      verilator:
+        mode: lint-only
+        verilator_options:
+          - "-Wall"
+
+  lint-core:
+    filesets:
+      - files_rtl_pq
+      - files_rtl_core
+    toplevel: otbn_core
+    default_tool: verilator
+    parameters:
+      - SYNTHESIS=true
+    tools:
+      verilator:
+        mode: lint-only
+        verilator_options:
+          - "-Wall"
+
+  synth: &synth
+    default_tool: vivado
+    filesets:
+      - files_rtl_pq
+      - files_rtl_core
+      - files_rtl_top
+      - files_constraints
+    toplevel: otbn
+    tools:
+      vivado:
+        part: "xc7k160tfbg676-1" # CW310 with K410T
+
+  sim:
+    <<: *synth
+    default_tool: vivado
+    filesets_append:
+      - files_rtl_tb
+    toplevel: tb_otbn
+    tools:
+      vivado:
+        part: "xc7k160tfbg676-1" # CW310 with K410T
+

@@ -10,7 +10,8 @@ module otbn_pq_alu
     input  alu_predec_pq_t                  alu_predec_pq_i,
     output logic              [PQLEN*8-1:0] rs0_o,
     output logic              [PQLEN*8-1:0] rs1_o,
-    output logic              [PQLEN*8-1:0] rd_o
+    output logic              [PQLEN*8-1:0] rd_o,
+    output logic alu_predec_error_o
 );
   //logic   [DATA_WIDTH-1:0]    gs_bf_add;
   logic [PQLEN-1:0] gs_bf_sub;
@@ -294,4 +295,55 @@ module otbn_pq_alu
 
   assign rd = (sel_rd == 1'b1) ? ct_bf_mux1 : ct_bf_add;
 
+
+  logic expected_gs_sub_op_en;
+  logic expected_ct_sub_op_en;
+  logic expected_mul_op_en;
+  logic expected_add_op_en;
+
+always_comb begin
+  expected_gs_sub_op_en = 1'b0;
+  expected_ct_sub_op_en = 1'b0;
+  expected_mul_op_en = 1'b0;
+  expected_add_op_en = 1'b0;
+  unique case(operation_i.op)  
+
+    AluOpPqAdd: begin
+      expected_add_op_en = 1'b1;
+    end
+
+    AluOpPqSub: begin
+      expected_ct_sub_op_en = 1'b1;
+    end
+    
+    AluOpPqMul: begin
+      expected_mul_op_en = 1'b1;
+    end
+    
+    AluOpPqScale: begin
+      expected_mul_op_en = 1'b1;
+    end
+    
+    AluOpPqButterflyCT: begin
+      expected_ct_sub_op_en = 1'b1;
+      expected_mul_op_en = 1'b1;
+      expected_add_op_en = 1'b1;
+    end
+    
+    AluOpPqButterflyGS: begin
+      expected_gs_sub_op_en = 1'b1;
+      expected_mul_op_en = 1'b1;
+      expected_add_op_en = 1'b1;
+    end
+    AluOpPqNone: ;
+    default: ;
+  endcase
+end
+
+assign alu_predec_error_o = 
+|{expected_add_op_en != alu_predec_pq_i.add_op_en,
+  expected_mul_op_en != alu_predec_pq_i.mul_op_en,
+  expected_gs_sub_op_en != alu_predec_pq_i.gs_sub_op_en,
+  expected_ct_sub_op_en != alu_predec_pq_i.ct_sub_op_en
+};
 endmodule : otbn_pq_alu

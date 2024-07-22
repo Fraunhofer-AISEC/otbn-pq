@@ -82,20 +82,23 @@ package otbn_pq_pkg;
     AluOpPqMul          = 8'h01,
     AluOpPqScale        = 8'h09,
     AluOpPqButterflyCT  = 8'h74,
-    AluOpPqButterflyGS  = 8'hD2
+    AluOpPqButterflyGS  = 8'hD2,
+    AluOpPqNone         = 8'h00
   } alu_op_pq_e;
 
   // {ioata, rot}
   typedef enum logic [1:0] {
     KeccakLaneOpXOR     = 2'b00,
     KeccakLaneOpXORR    = 2'b01,
-    KeccakLaneOpXORi    = 2'b10
+    KeccakLaneOpXORi    = 2'b10,
+    KeccakLaneOpNone    = 2'b11
   } keccak_lane_op_pq_e;  
 
   // {chi}
-  typedef enum logic {
-    KeccakPlaneOpParity = 1'b0,
-    KeccakPlaneOpChi    = 1'b1
+  typedef enum logic [1:0] {
+    KeccakPlaneOpParity = 2'b00,
+    KeccakPlaneOpChi    = 2'b01,
+    KeccakPlaneOpNone   = 2'b10
   } keccak_plane_op_pq_e; 
   
   typedef struct packed {

@@ -1196,9 +1196,9 @@ module otbn_decoder
 
     opcode_alu               = insn_opcode_e'(insn_alu[6:0]);
 
-    alu_operator_pq          = AluOpPqAdd;
-    keccak_lane_op_pq        = KeccakLaneOpXOR;
-    keccak_plane_op_pq       = KeccakPlaneOpParity;
+    alu_operator_pq          = AluOpPqNone;
+    keccak_lane_op_pq        = KeccakLaneOpNone;
+    keccak_plane_op_pq       = KeccakPlaneOpNone;
     alu_op_b_mux_sel_pq      = OpBSelRegister;
 
     alu_flag_en_bignum       = 1'b0;

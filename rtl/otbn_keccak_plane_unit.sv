@@ -9,7 +9,8 @@ module otbn_keccak_plane_unit
     input  keccak_plane_operation_t operation_i,
     input  keccak_lane_predec_pq_t  keccak_plane_predec_pq_i,
     output logic   [PQLEN*8-1:0]    rs0_o,
-    output logic   [PQLEN*8-1:0]    rs1_o
+    output logic   [PQLEN*8-1:0]    rs1_o,
+    output logic                    keccak_plane_predec_error_o
   );
   
   logic [63:0] operand [7:0];
@@ -59,7 +60,7 @@ module otbn_keccak_plane_unit
   assign chi_plane[3] = operand_blanked[3] ^(~operand_blanked[4] & operand_blanked[0]);
   assign chi_plane[4] = operand_blanked[4] ^(~operand_blanked[0] & operand_blanked[1]);
   
-  assign result = (operation_i.op) ? chi_plane : theta_parity_plane;
+  assign result = (operation_i.op[0]) ? chi_plane : theta_parity_plane;
   
   assign rs0_o[63:0]    = result[0];
   assign rs0_o[127:64]  = result[1];
@@ -71,5 +72,28 @@ module otbn_keccak_plane_unit
   assign rs1_o[127:64]  = operand_blanked[5];
   assign rs1_o[191:128] = operand_blanked[6];
   assign rs1_o[255:192] =  operand_blanked[7];
-  
+
+
+  logic expected_op_en;
+  always_comb begin
+    expected_op_en = 1'b0;
+
+    unique case(operation_i.op)  
+
+      KeccakPlaneOpParity: begin
+        expected_op_en = 1'b1;
+      end
+
+      KeccakPlaneOpChi: begin
+        expected_op_en = 1'b1;
+      end
+      
+      KeccakPlaneOpNone: ;
+      default: ;
+    endcase
+  end
+
+assign keccak_plane_predec_error_o = 
+|{expected_op_en != keccak_plane_predec_pq_i.op_en};
+
 endmodule

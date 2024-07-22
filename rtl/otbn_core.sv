@@ -286,16 +286,18 @@ module otbn_core
   logic   [PQLEN*8-1:0]         alu_pq_result_rs0;
   logic   [PQLEN*8-1:0]         alu_pq_result_rs1;
   logic   [PQLEN*8-1:0]         alu_pq_result_rd;
-  
+  logic                         alu_pq_predec_error;
   
   keccak_lane_operation_t  keccak_lane_operation;
   logic   [PQLEN*8-1:0]    keccak_lane_result_rd;
   keccak_lane_predec_pq_t keccak_lane_predec_pq;
+  logic keccak_lane_predec_error;
 
   keccak_plane_operation_t keccak_plane_operation;
   logic   [PQLEN*8-1:0]    keccak_plane_result_rs0;
   logic   [PQLEN*8-1:0]    keccak_plane_result_rs1;
   keccak_lane_predec_pq_t  keccak_plane_predec_pq;
+  logic keccak_plane_predec_error;
 
   logic   [PQLEN-1:0]         twiddle;
   logic   [PQLEN-1:0]         prime;
@@ -516,7 +518,7 @@ module otbn_core
                              ispr_predec_bignum.ispr_rd_en} & ~insn_valid;
 
   assign predec_error =
-    ((alu_bignum_predec_error | mac_bignum_predec_error | controller_predec_error) & insn_valid) |
+    ((alu_bignum_predec_error | mac_bignum_predec_error | controller_predec_error | alu_pq_predec_error | keccak_lane_predec_error | keccak_plane_predec_error) & insn_valid) |
      rf_bignum_predec_error                                                                      |
      ispr_predec_error                                                                           |
      rd_predec_error;
@@ -1107,7 +1109,8 @@ module otbn_core
     .alu_predec_pq_i    (alu_predec_pq),
     .rs0_o              (alu_pq_result_rs0),
     .rs1_o              (alu_pq_result_rs1),
-    .rd_o               (alu_pq_result_rd)
+    .rd_o               (alu_pq_result_rd),
+    .alu_predec_error_o (alu_pq_predec_error)
   );
   
   otbn_bitreverse    u_otbn_bitreverse(                 
@@ -1182,14 +1185,16 @@ module otbn_core
   otbn_keccak_lane_unit u_otbn_keccak_lane_unit(
     .operation_i   (keccak_lane_operation),
     .keccak_lane_predec_pq_i(keccak_lane_predec_pq),
-    .rd_o          (keccak_lane_result_rd)
+    .rd_o          (keccak_lane_result_rd),
+    .keccak_lane_predec_error_o(keccak_lane_predec_error)
     );
 
   otbn_keccak_plane_unit u_otbn_keccak_plane_unit(
     .operation_i   (keccak_plane_operation),
     .keccak_plane_predec_pq_i(keccak_plane_predec_pq),
     .rs0_o         (keccak_plane_result_rs0),
-    .rs1_o         (keccak_plane_result_rs1)
+    .rs1_o         (keccak_plane_result_rs1),
+    .keccak_plane_predec_error_o(keccak_plane_predec_error)
     );
     
   // Advance URND either when the start_stop_control commands it or when temporary secure wipe keys

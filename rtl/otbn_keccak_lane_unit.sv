@@ -8,7 +8,8 @@ module otbn_keccak_lane_unit
   (
     input keccak_lane_operation_t operation_i,
     input keccak_lane_predec_pq_t keccak_lane_predec_pq_i,
-    output logic[255:0] rd_o
+    output logic[255:0] rd_o,
+    output logic keccak_lane_predec_error_o
   );
   
   logic [63:0] operand_a;
@@ -220,6 +221,32 @@ module otbn_keccak_lane_unit
   
   // Select XOR or XORR operation
   assign rd = (operation_i.op[0]) ? lane_xorr : lane_xor;
-  
+
+  logic expected_op_en;
+  always_comb begin
+    expected_op_en = 1'b0;
+
+    unique case(operation_i.op)  
+
+      KeccakLaneOpXOR: begin
+        expected_op_en = 1'b1;
+      end
+
+      KeccakLaneOpXORR: begin
+        expected_op_en = 1'b1;
+      end
+
+      KeccakLaneOpXORi: begin
+        expected_op_en = 1'b1;
+      end
+
+      KeccakLaneOpNone: ;
+      default: ;
+    endcase
+  end
+
+assign keccak_lane_predec_error_o = 
+|{expected_op_en != keccak_lane_predec_pq_i.op_en};
+
 endmodule
 

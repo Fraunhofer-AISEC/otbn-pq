@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright lowRISC contributors.
+# Copyright lowRISC contributors (OpenTitan project).
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
@@ -391,7 +391,7 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
-        insns = load_file(args.yaml_file)
+        insns = load_file(args.yaml_file, None)
         impls = read_implementation(args.py_file)
     except RuntimeError as err:
         print(err, file=sys.stderr)

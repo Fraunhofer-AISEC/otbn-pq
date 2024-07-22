@@ -2,8 +2,9 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
+/* verilator lint_off UNUSED */
 
-module reg_addr_unit
+module otbn_reg_addr_unit
     import otbn_pq_pkg::*;
 (
     input   logic                       clk_i,
@@ -86,6 +87,10 @@ module reg_addr_unit
     
     logic   [7:0]       add_m_jbr;
     
+    logic  [23:0]       unused_base_data;
+
+    
+    //assign unused_base_data = ispr_base_wdata_i[31:8];
     assign ispr_base_wr_en = |ispr_base_wr_en_i;
         
     assign m_srl = {1'b0, m_q[7:1]};
@@ -107,7 +112,7 @@ module reg_addr_unit
     
     assign add_m_jbr = jbr + m_q;
 
-    adder #(
+    otbn_adder #(
       .DATA_WIDTH(3)
     ) u_x_inc(
       .op0_i(x_q),
@@ -116,7 +121,7 @@ module reg_addr_unit
       .res_o(x_inc)
     );
 
-    adder #(
+    otbn_adder #(
       .DATA_WIDTH(3)
     ) u_y_inc(
       .op0_i(y_q),
@@ -373,4 +378,4 @@ module reg_addr_unit
         endcase
     end   
 
-endmodule: reg_addr_unit
+endmodule: otbn_reg_addr_unit

@@ -1,4 +1,4 @@
-# Copyright lowRISC contributors.
+# Copyright lowRISC contributors (OpenTitan project).
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
@@ -87,6 +87,7 @@ def load_elf(sim: OTBNSim, path: str) -> Optional[int]:
             f.write("{:08b}".format(dmem_bytes[i+3]) + "{:08b}".format(dmem_bytes[i+2]) + "{:08b}".format(dmem_bytes[i+1]) + "{:08b}".format(dmem_bytes[i])  )
             f.write("\n")
             
+
     # Collect imem bytes into 32-bit words and set the validity bit for each
     assert len(imem_bytes) & 3 == 0
     imem_words = [(True, w32s[0])

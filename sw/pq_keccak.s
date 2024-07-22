@@ -4,7 +4,7 @@
 
 /* Keccak Implementation */
 
-.section .text
+.section .text.start
 
 /*************************************************/
 /*        Load Constants for Configuration       */
@@ -265,6 +265,7 @@ rc5:
   .quad 0x0000000080000001
   .quad 0x8000000080008008
 
+.globl coef0
 coef0:
   .quad 0x0000000000000000
   .quad 0x0000000000000000

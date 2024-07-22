@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 
-module bitreverse
+module otbn_bitreverse
     import otbn_pq_pkg::*;
 (
     input   bitrev_pq_operation_t                   operation_i,

@@ -1,5 +1,4 @@
-// Copyright lowRISC contributors.
-// Modified by Fraunhofer AISEC.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -11,7 +10,7 @@
  *
  * Features:
  * - 2 read ports
- * - 2 write port
+ * - 1 write port
  * - Half (WLEN) word write enables
  */
 module otbn_rf_bignum_ff
@@ -26,7 +25,7 @@ module otbn_rf_bignum_ff
   input  logic [7:0]         wr_en_b_i,
   input  logic [ExtWLEN-1:0] wr_data_a_i,
   input  logic [ExtWLEN-1:0] wr_data_b_i, 
- 
+
   input  logic [WdrAw-1:0]   rd_addr_a_i,
   output logic [ExtWLEN-1:0] rd_data_a_o,
 
@@ -159,7 +158,7 @@ module otbn_rf_bignum_ff
   logic we_err, we_err_d;
   logic [7:0][NWdr-1:0] we_a_onehot_unbuf, we_a_onehot_buf;
   logic [7:0][NWdr-1:0] we_b_onehot_unbuf, we_b_onehot_buf;
-  
+
   for (genvar k = 0; k < 8; k++) begin : g_check
     for (genvar i = 0; i < NWdr; i++) begin : g_reshape
       assign we_a_onehot_unbuf[k][i] = we_a_onehot[i][k];
@@ -198,7 +197,7 @@ module otbn_rf_bignum_ff
     .en_i(|wr_en_a_i),
     .err_o(we_err)
   );
-
+  
   prim_onehot_check #(
     .AddrWidth(WdrAw),
     .OneHotWidth(NWdr),

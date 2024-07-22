@@ -5,7 +5,7 @@
 /* PQ addition and subtraction example for kyber prime. Loads two 256-bit words from DMem into w1, w0.
    Arithmetic using PQ.ADD and PQ.SUB with the results placed into w3, w2 */
 
-.section .text
+.section .text.start
 
 /* Load operands into WDRs */
 li x2, 0
@@ -63,7 +63,7 @@ ecall
    000003e700000003 000004d200000004
 
    (.quad below is in reverse order) */
-
+.globl operand1
 operand1:
   .quad 0x000004d200000004
   .quad 0x000003e700000003
@@ -77,7 +77,7 @@ operand1:
    00000a8a00000007 0000099900000008
 
    (.quad below is in reverse order) */
-
+.globl operand2
 operand2:
   .quad 0x0000099900000008
   .quad 0x00000a8a00000007
@@ -90,7 +90,7 @@ operand2:
    0000000000000000 0000000000000D01
 
    (.quad below is in reverse order) */
-
+.globl prime
 prime:
   .quad 0x0000000000000D01
   .quad 0x0000000000000000

@@ -1,5 +1,4 @@
-// Copyright lowRISC contributors.
-// Modified by Fraunhofer AISEC.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -141,8 +140,8 @@ module otbn_decoder
   
   logic                     rc_idx_inc;
    
-  assign pqsr_addr         = insn[27:20];
-  assign pqctrlsr_addr     = insn[27:20];
+  assign pqsr_addr         = insn[20+:PqsprNumWidth];
+  assign pqctrlsr_addr     = insn[20+:PqctrlsprNumWidth];
   assign br_nof_bits       = insn[28:25];
   
 
@@ -174,6 +173,7 @@ module otbn_decoder
   assign imm_l_type_base = {22'b0, insn[19:15], insn[11:7]};
   // x type immediate is for BN.LID/BN.SID instructions and is not from the RISC-V ISA
   assign imm_x_type_base = {{17{insn[11]}}, insn[11:9], insn[31:25], 5'b0};
+
 
   assign pq_imm = {{21{insn[30]}}, insn[30:20]};
 
@@ -338,6 +338,7 @@ module otbn_decoder
     ispr_rs_insn:  ispr_rs_insn,
     ispr_flags_wr: ispr_flags_wr
   };
+
 
   assign insn_dec_pq_o = '{
     a:             insn_rs1,
@@ -1160,7 +1161,6 @@ module otbn_decoder
         
         alu_in_place_pq        = 1'b1;
       end
-
 
       default: illegal_insn = 1'b1;
     endcase

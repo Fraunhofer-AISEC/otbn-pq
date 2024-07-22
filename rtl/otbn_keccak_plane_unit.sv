@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 
-module keccak_plane_unit
+module otbn_keccak_plane_unit
   import otbn_pq_pkg::*;
   (
     input  keccak_plane_operation_t operation_i,

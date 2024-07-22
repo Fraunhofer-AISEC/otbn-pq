@@ -4,7 +4,7 @@
 
 /* Polynom Uniform Sampling Implementation */
 
-.section .text
+.section .text.start
 
 /*************************************************/
 /*        Load Constants for Configuration       */
@@ -838,7 +838,8 @@ allzero:
   .quad 0x0000000000000000
   .quad 0x0000000000000000
   .quad 0x0000000000000000
-
+  
+.globl message
 message:
   .quad 0x0000000000000001
   .quad 0x0000000000000000

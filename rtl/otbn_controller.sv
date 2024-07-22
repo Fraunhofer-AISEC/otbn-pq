@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -10,6 +10,7 @@
 module otbn_controller
   import otbn_pkg::*;
   import otbn_pq_pkg::*;
+
 #(
   // Size of the instruction memory, in bytes
   parameter int ImemSizeByte = 4096,
@@ -98,7 +99,6 @@ module otbn_controller
   output logic [NWdr-1:0] rf_bignum_pq_a_indirect_onehot_o,
   output logic [NWdr-1:0] rf_bignum_pq_rd_b_indirect_onehot_o,
   output logic [NWdr-1:0] rf_bignum_pq_wr_b_indirect_onehot_o,
-
   output logic [NWdr-1:0] rf_bignum_wr_indirect_onehot_o,
   output logic            rf_bignum_indirect_en_o,
   output logic            rf_bignum_pq_indirect_en_o,
@@ -136,7 +136,6 @@ module otbn_controller
 
   input  logic [BaseIntgWidth-1:0] lsu_base_rdata_i,
   input  logic [ExtWLEN-1:0]       lsu_bignum_rdata_i,
-
 
   // PQ ALU
   output  alu_pq_operation_t      alu_pq_operation_o,
@@ -223,10 +222,12 @@ module otbn_controller
   input  logic secure_wipe_ack_i,
   input  logic sec_wipe_zero_i,
   input  logic secure_wipe_running_i,
+  input  logic sec_wipe_err_i,
 
   input  logic        state_reset_i,
   output logic [31:0] insn_cnt_o,
-  input  logic        insn_cnt_clear_i,
+  input  logic        insn_cnt_clear_ext_i,
+  input  logic        insn_cnt_clear_int_i,
   output logic        mems_sec_wipe_o,
 
   input  logic        software_errs_fatal_i,
@@ -268,6 +269,7 @@ module otbn_controller
   logic executing;
   logic state_error, state_error_d, state_error_q;
   logic spurious_secure_wipe_ack_q, spurious_secure_wipe_ack_d;
+  logic sec_wipe_err_q, sec_wipe_err_d;
   logic mubi_err_q, mubi_err_d;
 
   logic                     insn_fetch_req_valid_raw;
@@ -336,7 +338,6 @@ module otbn_controller
   
   logic    [7:0]                       rf_bignum_wr_en_a_indirect;
   logic    [7:0]                       rf_bignum_wr_en_b_indirect;
-
 
   logic                     lsu_load_req_raw;
   logic                     lsu_store_req_raw;
@@ -455,6 +456,18 @@ module otbn_controller
                                       (secure_wipe_ack_i      &
                                        ~secure_wipe_running_q &
                                        ~secure_wipe_running_i);
+
+  // Detect and latch unexpected secure wipe signals.
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
+      sec_wipe_err_q <= 1'b0;
+    end else begin
+      sec_wipe_err_q <= sec_wipe_err_d;
+    end
+  end
+  assign sec_wipe_err_d = sec_wipe_err_q |
+                          sec_wipe_err_i |
+                          (sec_wipe_zero_i & ~secure_wipe_running_i);
 
   // Stall a cycle on loads to allow load data writeback to happen the following cycle. Stall not
   // required on stores as there is no response to deal with.
@@ -598,7 +611,6 @@ module otbn_controller
     // On any error immediately halt, either going to OtbnStateLocked or OtbnStateHalt depending on
     // whether it was a fatal error.
     if (err) begin
-      prefetch_en_o           = 1'b0;
       insn_fetch_resp_clear_o = 1'b1;
 
       if (fatal_err) begin
@@ -660,7 +672,6 @@ module otbn_controller
   // into fatal_escalate_en_i, RND errors factor into recov_escalate_en_i).
   assign mubi_err_d = |{mubi4_test_invalid(fatal_escalate_en_i),
                         mubi4_test_invalid(recov_escalate_en_i),
-                        mubi4_test_invalid(rma_req_i),
                         mubi_err_q};
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
@@ -677,7 +688,7 @@ module otbn_controller
   assign fatal_software_err       = software_err & software_errs_fatal_i;
   assign bad_internal_state_err   = |{state_error_d, loop_hw_err, rf_base_call_stack_hw_err_i,
                                       rf_bignum_spurious_we_err, spurious_secure_wipe_ack_q,
-                                      mubi_err_q};
+                                      sec_wipe_err_q, mubi_err_q};
   assign reg_intg_violation_err   = rf_bignum_intg_err | ispr_rdata_intg_err;
   assign key_invalid_err          = ispr_rd_bignum_insn & insn_valid_i & key_invalid;
   assign illegal_insn_err         = illegal_insn_static | rf_indirect_err;
@@ -756,7 +767,7 @@ module otbn_controller
   // and eventually acknowledging the RMA request.
   assign fatal_err = |{internal_fatal_err,
                        mubi4_test_true_loose(fatal_escalate_en_i),
-                       mubi4_test_true_loose(rma_req_i)};
+                       mubi4_test_true_strict(rma_req_i)};
 
   assign recoverable_err_o = recoverable_err | (software_err & ~software_errs_fatal_i);
   assign mems_sec_wipe_o   = (state_d == OtbnStateLocked) & (state_q != OtbnStateLocked);
@@ -772,7 +783,7 @@ module otbn_controller
   `ASSERT(ErrBitSetOnErr,
       err & (mubi4_test_false_strict(fatal_escalate_en_i) &
              mubi4_test_false_strict(recov_escalate_en_i) &
-             mubi4_test_false_strict(rma_req_i)) |=>
+             mubi4_test_false_loose(rma_req_i)) |=>
           err_bits_o)
   `ASSERT(ErrSetOnFatalErr, fatal_err |-> err)
   `ASSERT(SoftwareErrIfNonInsnAddrSoftwareErr, non_insn_addr_software_err |-> software_err)
@@ -788,7 +799,10 @@ module otbn_controller
   `PRIM_FLOP_SPARSE_FSM(u_state_regs, state_d, state_q, otbn_state_e, OtbnStateHalt)
 
   // SEC_CM: CTRL_FLOW.COUNT
-  assign insn_cnt_clear = state_reset_i | (state_q == OtbnStateLocked) | insn_cnt_clear_i;
+  // Two explicit clear controls, one comes from external to otbn_core and the other is generated
+  // internally (by otbn_start_stop_control).
+  assign insn_cnt_clear =
+    (state_q == OtbnStateLocked) | insn_cnt_clear_ext_i | insn_cnt_clear_int_i;
 
   always_comb begin
     if (insn_cnt_clear) begin
@@ -1020,29 +1034,31 @@ module otbn_controller
     rf_base_wr_data_intg_sel_o = 1'b0;
 
     if(insn_dec_pq_i.rf_wdata_sel == RfWdSelIsprPqCtrl ) begin
+
         rf_base_wr_data_no_intg_o = pqctrlsr_rdata;
+
     end else begin
 
-    unique case (insn_dec_base_i.rf_wdata_sel)
-      RfWdSelEx: begin
-        rf_base_wr_data_no_intg_o  = insn_dec_shared_pq_i.br_insn ? br_pq_result_i : alu_base_operation_result_i;
-      end
-      RfWdSelNextPc: begin
-        rf_base_wr_data_no_intg_o  = {{(32-(ImemAddrWidth+1)){1'b0}}, next_insn_addr_wide};
-      end
-      RfWdSelIspr: begin
-        rf_base_wr_data_no_intg_o  = csr_rdata;
-      end
-      RfWdSelIncr: begin
-        rf_base_wr_data_no_intg_o  = increment_out;
-      end
-      RfWdSelLsu: begin
-        rf_base_wr_data_intg_sel_o = 1'b1;
-        rf_base_wr_data_intg_o     = lsu_base_rdata_i;
-      end
-      default: ;
-    endcase
-  end
+      unique case (insn_dec_base_i.rf_wdata_sel)
+        RfWdSelEx: begin
+          rf_base_wr_data_no_intg_o  = insn_dec_shared_pq_i.br_insn ? br_pq_result_i : alu_base_operation_result_i;
+        end
+        RfWdSelNextPc: begin
+          rf_base_wr_data_no_intg_o  = {{(32-(ImemAddrWidth+1)){1'b0}}, next_insn_addr_wide};
+        end
+        RfWdSelIspr: begin
+          rf_base_wr_data_no_intg_o  = csr_rdata;
+        end
+        RfWdSelIncr: begin
+          rf_base_wr_data_no_intg_o  = increment_out;
+        end
+        RfWdSelLsu: begin
+          rf_base_wr_data_intg_sel_o = 1'b1;
+          rf_base_wr_data_intg_o     = lsu_base_rdata_i;
+        end
+        default: ;
+      endcase
+    end
   end
 
   for (genvar i = 0; i < BaseWordsPerWLEN; ++i) begin : g_rf_bignum_rd_data
@@ -1057,6 +1073,7 @@ module otbn_controller
   assign rf_bignum_rd_addr_a_unbuf = insn_dec_bignum_i.rf_a_indirect ? insn_bignum_rd_addr_a_q :
                                      insn_dec_pq_i.operands_indirect ? wdr0_i : 
                                                                        insn_dec_bignum_i.a;
+
   prim_buf #(
     .Width(WdrAw)
   ) u_rf_bignum_rd_addr_a_buf (
@@ -1236,7 +1253,8 @@ module otbn_controller
       if (insn_dec_bignum_i.mac_en && insn_dec_bignum_i.mac_shift_out) begin
         // Special handling for BN.MULQACC.SO, only enable upper or lower half depending on
         // mac_wr_hw_sel_upper.
-        rf_bignum_wr_en_a_unbuf = insn_dec_bignum_i.mac_wr_hw_sel_upper ? 8'b11110000 : 8'b00001111;      end else begin
+        rf_bignum_wr_en_a_unbuf = insn_dec_bignum_i.mac_wr_hw_sel_upper ? 8'b11110000 : 8'b00001111;
+      end else begin
         // For everything else write both halves immediately.
         rf_bignum_wr_en_a_unbuf = 8'b11111111;
       end
@@ -1272,8 +1290,9 @@ module otbn_controller
      if (insn_valid_i && insn_dec_pq_i.rf_we && insn_dec_pq_i.pq_in_place && !rf_indirect_stall) begin
        rf_bignum_wr_en_b_unbuf = insn_dec_pq_i.operands_indirect ? rf_bignum_wr_en_b_indirect : 
                                                                    insn_dec_pq_i.pq_wr_w_sel_b;
-     end
-   end
+     
+    end
+  end
 
   // Bignum RF control signals from the controller aren't actually used, instead the predecoded
   // one-hot versions are. The predecoded versions get checked against the signals produced here.
@@ -1295,6 +1314,7 @@ module otbn_controller
   // Dummy
   //assign rf_bignum_wr_en_b_unbuf = 'b0;
 
+
   assign rf_bignum_wr_commit_o = |rf_bignum_wr_en_a_o & insn_executing & !stall;
 
   assign rf_bignum_indirect_en_o    = insn_executing & rf_indirect_stall;
@@ -1302,7 +1322,7 @@ module otbn_controller
   assign rf_bignum_rd_b_indirect_en = insn_executing & insn_dec_bignum_i.rf_b_indirect;
   assign rf_bignum_wr_indirect_en   = insn_executing & insn_dec_bignum_i.rf_d_indirect;
   assign rf_bignum_pq_indirect_en_o = insn_dec_pq_i.operands_indirect;
-
+  
   prim_onehot_enc #(
     .OneHotWidth(NWdr)
   ) rf_bignum_rd_a_idirect_onehot__enc (
@@ -1351,6 +1371,7 @@ module otbn_controller
     .out_o (rf_bignum_pq_wr_b_indirect_onehot_o)
   );
 
+
   // For BN.LID sample the indirect destination register index in first cycle as an increment might
   // change it for the second cycle where the load data is written to the bignum register file.
   always_ff @(posedge clk_i) begin
@@ -1371,7 +1392,6 @@ module otbn_controller
   // one-hot versions are. The predecoded versions get checked against the signals produced here.
   // Buffer them to ensure they don't get optimised away (with a functionaly correct OTBN they will
   // always be identical).
-
   assign rf_bignum_wr_addr_a_unbuf =  insn_dec_pq_i.pq_in_place ? (insn_dec_pq_i.operands_indirect ? wdr0_i :  
                                                                                                      insn_dec_pq_i.a) : 
                                                                   (insn_dec_pq_i.operands_indirect ? wdr0_i :
@@ -1383,6 +1403,7 @@ module otbn_controller
                                                                  (insn_dec_pq_i.operands_indirect ? wdr1_i :
                                                                                                     insn_dec_bignum_i.rf_d_indirect ? insn_bignum_wr_addr_q :
                                                                                                                                       insn_dec_bignum_i.d);
+
 
   prim_buf #(
     .Width(WdrAw)
@@ -1397,6 +1418,7 @@ module otbn_controller
     .in_i (rf_bignum_wr_addr_b_unbuf),
     .out_o(rf_bignum_wr_addr_b_o)
   );
+
   // For the shift-out variant of BN.MULQACC the bottom half of the MAC result is written to one
   // half of a desintation register specified by the instruction (mac_wr_hw_sel_upper). The bottom
   // half of the MAC result must be placed in the appropriate half of the write data (the RF only
@@ -1430,28 +1452,28 @@ module otbn_controller
            
     end else begin
 
-    unique case (insn_dec_bignum_i.rf_wdata_sel)
-      RfWdSelEx: begin
-        rf_bignum_wr_data_a_no_intg_o  = alu_bignum_operation_result_i;
-      end
-      RfWdSelMac: begin
-        rf_bignum_wr_data_a_no_intg_o  = mac_bignum_rf_wr_data;
-      end
-      RfWdSelIspr: begin
-        rf_bignum_wr_data_a_intg_sel_o = 1'b1;
-        rf_bignum_wr_data_a_intg_o     = ispr_rdata_intg_i;
-      end
-      RfWdSelMovSel: begin
-        rf_bignum_wr_data_a_intg_sel_o = 1'b1;
-        rf_bignum_wr_data_a_intg_o     = selection_result;
-      end
-      RfWdSelLsu: begin
-        rf_bignum_wr_data_a_intg_sel_o = 1'b1;
-        //SEC_CM: BUS.INTEGRITY
-        rf_bignum_wr_data_a_intg_o     = lsu_bignum_rdata_i;
-      end
-      default: ;
-    endcase
+      unique case (insn_dec_bignum_i.rf_wdata_sel)
+        RfWdSelEx: begin
+          rf_bignum_wr_data_a_no_intg_o  = alu_bignum_operation_result_i;
+        end
+        RfWdSelMac: begin
+          rf_bignum_wr_data_a_no_intg_o  = mac_bignum_rf_wr_data;
+        end
+        RfWdSelIspr: begin
+          rf_bignum_wr_data_a_intg_sel_o = 1'b1;
+          rf_bignum_wr_data_a_intg_o     = ispr_rdata_intg_i;
+        end
+        RfWdSelMovSel: begin
+          rf_bignum_wr_data_a_intg_sel_o = 1'b1;
+          rf_bignum_wr_data_a_intg_o     = selection_result;
+        end
+        RfWdSelLsu: begin
+          rf_bignum_wr_data_a_intg_sel_o = 1'b1;
+          //SEC_CM: BUS.INTEGRITY
+          rf_bignum_wr_data_a_intg_o     = lsu_bignum_rdata_i;
+        end
+        default: ;
+      endcase
     end
   end
 
@@ -1912,8 +1934,6 @@ module otbn_controller
   assign ipqspr_base_wdata_o = pqsr_wdata_base;
   assign ipqspr_base_wr_en_o = {BaseWordsPerWLEN{ipqspr_wr_base_insn & insn_executing}} &
                                ipqspr_word_sel_base;
-
-
 
   // For BN.SID the LSU address is computed in the first cycle by the base ALU. The store request
   // itself occurs in the second cycle when the store data is available (from the indirect register

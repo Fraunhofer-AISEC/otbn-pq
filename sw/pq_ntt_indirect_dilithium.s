@@ -1,10 +1,10 @@
-/* Copyright Copyright Fraunhofer Institute for Applied and Integrated Security (AISEC). */
+/* Copyright Fraunhofer Institute for Applied and Integrated Security (AISEC). */
 /* Licensed under the Apache License, Version 2.0, see LICENSE for details. */
 /* SPDX-License-Identifier: Apache-2.0 */
 
 /* NTT Implementation of Dilithium */
 
-.section .text
+.section .text.start
 
 /*************************************************/
 /*        Load Constants for Configuration       */
@@ -202,6 +202,7 @@ psi:
   .quad 0x00294a6700299658
   .quad 0x001fea930043e6e6
 
+.globl coef0
 coef0:
   .quad 0x0000000100000000
   .quad 0x0000000300000002

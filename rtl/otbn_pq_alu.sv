@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 
-module pq_alu
+module otbn_pq_alu
   import otbn_pq_pkg::*;
 (
     input  alu_pq_operation_t               operation_i,
@@ -42,8 +42,8 @@ module pq_alu
   logic [PQLEN-1:0] rs0;
   logic [PQLEN-1:0] rs1;
   logic [PQLEN-1:0] rd;
-
-
+  logic sel_imm;
+  
   always_comb begin
     alu_op_a = '0;
     alu_op_b = '0;
@@ -163,7 +163,7 @@ module pq_alu
   assign sel_imm            = operation_i.imm_sel;
   
   
-  subtractor #(
+  otbn_subtractor #(
       .DATA_WIDTH(PQLEN)
   ) U_GS_SUBTRACTOR (
       .op0_i(alu_op_a),
@@ -182,7 +182,7 @@ module pq_alu
   assign mul_op_mux = (sel_twiddle == 1'b1) ? operation_i.twiddle : alu_op_a;
 
 
-  multiplier #(
+  otbn_multiplier #(
       .DATA_WIDTH(PQLEN),
       .LOG_R(LOG_R)
   ) U_MULTIPLIER (
@@ -199,7 +199,7 @@ module pq_alu
 
   assign mul_2_sub_mux  = (sel_forward_rs0 == 1'b1) ? alu_op_a : mul_2_mux;
 
-  adder #(
+  otbn_adder #(
       .DATA_WIDTH(PQLEN)
   ) U_CT_ADDER (
       .op0_i(alu_op_a),
@@ -208,7 +208,7 @@ module pq_alu
       .res_o(ct_bf_add)
   );
 
-  subtractor #(
+  otbn_subtractor #(
       .DATA_WIDTH(PQLEN)
   ) U_CT_SUBTRACTOR (
       .op0_i(mul_2_sub_mux),
@@ -227,4 +227,4 @@ module pq_alu
 
   assign rd = (sel_rd == 1'b1) ? ct_bf_mux1 : ct_bf_mux0;
 
-endmodule : pq_alu
+endmodule : otbn_pq_alu

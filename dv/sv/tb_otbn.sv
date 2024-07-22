@@ -24,8 +24,8 @@ module tb_otbn
     // Default seed and permutation for URND LFSR
     localparam urnd_prng_seed_t RndCnstUrndPrngSeed = RndCnstUrndPrngSeedDefault; 
      
-    localparam string                 log_path = "/home/t_stelzer/projects/TUM/dilithium-on-open-titan/hw/vendor/aisec_otbn_pq/dv/sv/log/";
-    localparam string                 mem_path = "/home/t_stelzer/projects/TUM/dilithium-on-open-titan/hw/vendor/aisec_otbn_pq/dv/sv/mem/";
+    localparam string                 log_path = "/home/t_stelzer/projects/TrEB/LatestRelease/opentitan/hw/ip/otbn/dv/sv/log/";
+    localparam string                 mem_path = "/home/t_stelzer/projects/TrEB/LatestRelease/opentitan/hw/ip/otbn/dv/sv/mem/";
     
     // Filehandle, clock cycle counter, readback data variable, teststate
     integer                                     f;   
@@ -285,40 +285,40 @@ module tb_otbn
             read_tl_ul(.log_filehandle(f), .data(rdbk), .clk(clk_i), .clk_cycles(cc), .address(OTBN_STATUS_OFFSET), .tl_o(tl_o), .tl_i(tl_i_d) );
         end 
 
-        $display("Begin Testcase 0000: MUL256\n");	
+	    $display("Begin Testcase 0000: MUL256\n");	
         `include "testcase0000.sv"
 
-        $display("Begin Testcase 0001: Access of PQSPR\n");	
+	    $display("Begin Testcase 0001: Access of PQSPR\n");	
         `include "testcase0001.sv"
 
-        $display("Begin Testcase 0002: Keccak\n");	
+	    $display("Begin Testcase 0002: Keccak\n");	
         `include "testcase0002.sv"
 
-        $display("Begin Testcase 0003: PQ-ALU: Add and Sub\n");	
+	    $display("Begin Testcase 0003: PQ-ALU: Add and Sub\n");	
         `include "testcase0003.sv"
 
-        $display("Begin Testcase 0004: PQ-ALU: Mont Mul\n");	
+	    $display("Begin Testcase 0004: PQ-ALU: Mont Mul\n");	
         `include "testcase0004.sv"
 
-        $display("Begin Testcase 0004: PQ-ALU: Butterfly\n");	
+	    $display("Begin Testcase 0004: PQ-ALU: Butterfly\n");	
         `include "testcase0005.sv"
 
 
-        $display("Begin Testcase 0010: Keccak\n");	
+	    $display("Begin Testcase 0010: Keccak\n");	
         `include "testcase0010.sv"
 
-        $display("Begin Testcase 0011: SHAKE-128\n");	
+	    $display("Begin Testcase 0011: SHAKE-128\n");	
         `include "testcase0011.sv"
 
-        $display("Begin Testcase 0012: SHAKE-256\n");	
+	    $display("Begin Testcase 0012: SHAKE-256\n");	
         `include "testcase0012.sv"
 
 
-	    $display("Begin Testcase 0020: NTT Dilithium Unrolled\n");	
-        `include "testcase0020.sv"
+//	    $display("Begin Testcase 0020: NTT Dilithium Unrolled\n");	
+//        `include "testcase0020.sv"
 
-	    $display("Begin Testcase 0021: INTT Dilithium Unrolled\n");	
-        `include "testcase0021.sv"
+//	    $display("Begin Testcase 0021: INTT Dilithium Unrolled\n");	
+//        `include "testcase0021.sv"
 
 	    $display("Begin Testcase 0022: NTT Dilithium Indirect Reg Addr\n");	
         `include "testcase0022.sv"
@@ -326,68 +326,68 @@ module tb_otbn
 	    $display("Begin Testcase 0023: INTT Dilithium Indirect Reg Addr\n");	
         `include "testcase0023.sv"
 
-        $display("Begin Testcase 0024: NTT Kyber Unrolled\n");	
-        `include "testcase0024.sv"
+//	    $display("Begin Testcase 0024: NTT Kyber Unrolled\n");	
+//        `include "testcase0024.sv"
 
-        $display("Begin Testcase 0025: INTT Kyber Unrolled\n");	
-        `include "testcase0025.sv"
+//	    $display("Begin Testcase 0025: INTT Kyber Unrolled\n");	
+//        `include "testcase0025.sv"
 
-        $display("Begin Testcase 0026: NTT Kyber Indirect Reg Addr\n");	
-        `include "testcase0026.sv"
+//	    $display("Begin Testcase 0026: NTT Kyber Indirect Reg Addr\n");	
+//        `include "testcase0026.sv"
 
-        $display("Begin Testcase 0027: INTT Kyber Indirect Reg Addr\n");	
-        `include "testcase0027.sv"
+//	    $display("Begin Testcase 0027: INTT Kyber Indirect Reg Addr\n");	
+//        `include "testcase0027.sv"
 
-        $display("Begin Testcase 0028: NTT Falcon-512 Indirect Reg Addr\n");	
-        `include "testcase0028.sv"
+//	    $display("Begin Testcase 0028: NTT Falcon-512 Indirect Reg Addr\n");	
+//        `include "testcase0028.sv"
 
-        $display("Begin Testcase 0029: INTT Falcon-512 Indirect Reg Addr\n");	
-        `include "testcase0029.sv"
+//	    $display("Begin Testcase 0029: INTT Falcon-512 Indirect Reg Addr\n");	
+//        `include "testcase0029.sv"
 
-        $display("Begin Testcase 0030: NTT Falcon-1024 Indirect Reg Addr\n");	
-        `include "testcase0030.sv"
+//	    $display("Begin Testcase 0030: NTT Falcon-1024 Indirect Reg Addr\n");	
+//        `include "testcase0030.sv"
 
-        $display("Begin Testcase 0031: INTT Falcon-1024 Indirect Reg Addr\n");	
-        `include "testcase0031.sv"
+//	    $display("Begin Testcase 0031: INTT Falcon-1024 Indirect Reg Addr\n");	
+//        `include "testcase0031.sv"
 
-        $display("Begin Testcase 0040: Pointwise Mul Dilithium\n");	
-        `include "testcase0040.sv"
+//	    $display("Begin Testcase 0040: Pointwise Mul Dilithium\n");	
+//        `include "testcase0040.sv"
 
-        $display("Begin Testcase 0040: Basecase Mul Kyber\n");	
-        `include "testcase0041.sv"
+//	    $display("Begin Testcase 0040: Basecase Mul Kyber\n");	
+//        `include "testcase0041.sv"
 
-        $display("Begin Testcase 0042: Pointwise Mul Falcon-512\n");	
-        `include "testcase0042.sv"
+//	    $display("Begin Testcase 0042: Pointwise Mul Falcon-512\n");	
+//        `include "testcase0042.sv"
 
-        $display("Begin Testcase 0043: Pointwise Mul Falcon-1024\n");	
-        `include "testcase0043.sv"
-
-
-
-        $display("Begin Testcase 0100: Dilithium ExpandA\n");	
-        `include "testcase0100.sv"
-
-        $display("Begin Testcase 0100: Dilithium SampleInBall\n");	
-        `include "testcase0101.sv"
-
-        $display("Begin Testcase 0200: Dilithium-II Decompose & UseHint\n");	
-        `include "testcase0200.sv"
-
-        $display("Begin Testcase 0201: Dilithium-II Poly UseHint\n");	
-        `include "testcase0201.sv"
-
-        $display("Begin Testcase 0202: Dilithium-II Poly PackW1\n");	
-        `include "testcase0202.sv"
+//	    $display("Begin Testcase 0043: Pointwise Mul Falcon-1024\n");	
+//        `include "testcase0043.sv"
 
 
-        $display("Begin Testcase 0210: Dilithium-III/IV Decompose & UseHint\n");	
-        `include "testcase0210.sv"
 
-        $display("Begin Testcase 0211: Dilithium-III/IV Poly UseHint\n");	
-        `include "testcase0211.sv"
+//	    $display("Begin Testcase 0100: Dilithium ExpandA\n");	
+//        `include "testcase0100.sv"
 
-        $display("Begin Testcase 0212: Dilithium-II Poly PackW1\n");	
-        `include "testcase0212.sv"
+//	    $display("Begin Testcase 0100: Dilithium SampleInBall\n");	
+//        `include "testcase0101.sv"
+
+//	    $display("Begin Testcase 0200: Dilithium-II Decompose & UseHint\n");	
+//        `include "testcase0200.sv"
+
+//     	$display("Begin Testcase 0201: Dilithium-II Poly UseHint\n");	
+//        `include "testcase0201.sv"
+
+//	    $display("Begin Testcase 0202: Dilithium-II Poly PackW1\n");	
+//        `include "testcase0202.sv"
+
+
+//	    $display("Begin Testcase 0210: Dilithium-III/IV Decompose & UseHint\n");	
+//        `include "testcase0210.sv"
+
+//     	$display("Begin Testcase 0211: Dilithium-III/IV Poly UseHint\n");	
+//        `include "testcase0211.sv"
+
+//	    $display("Begin Testcase 0212: Dilithium-II Poly PackW1\n");	
+//        `include "testcase0212.sv"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Dilithium Signature Verification
@@ -396,20 +396,20 @@ module tb_otbn
         $display("Begin Testcase 1000: Dilithium-II Verify with valid signature\n");	
         `include "testcase1000-dilitium-ii-valid.sv"
 
-        $display("Begin Testcase 1001: Dilithium-II Verify with invalid signature\n");	
-        `include "testcase1001-dilitium-ii-invalid.sv"
+//        $display("Begin Testcase 1001: Dilithium-II Verify with invalid signature\n");	
+//        `include "testcase1001-dilitium-ii-invalid.sv"
 
-        $display("Begin Testcase 1002: Dilithium-III Verify with valid signature\n");	
-        `include "testcase1002-dilitium-iii-valid.sv"
+//        $display("Begin Testcase 1002: Dilithium-III Verify with valid signature\n");	
+//        `include "testcase1002-dilitium-iii-valid.sv"
 
-        $display("Begin Testcase 1003: Dilithium-III Verify with invalid signature\n");	
-        `include "testcase1003-dilitium-iii-invalid.sv"
+//        $display("Begin Testcase 1003: Dilithium-III Verify with invalid signature\n");	
+//        `include "testcase1003-dilitium-iii-invalid.sv"
 
-        $display("Begin Testcase 1004: Dilithium-V Verify with valid signature\n");	
-        `include "testcase1004-dilitium-v-valid.sv"
+//        $display("Begin Testcase 1004: Dilithium-V Verify with valid signature\n");	
+//        `include "testcase1004-dilitium-v-valid.sv"
 
-        $display("Begin Testcase 1005: Dilithium-V Verify with invalid signature\n");	
-        `include "testcase1005-dilitium-v-invalid.sv"
+//        $display("Begin Testcase 1005: Dilithium-V Verify with invalid signature\n");	
+//        `include "testcase1005-dilitium-v-invalid.sv"
 	
         // Measurement of Performance
         

@@ -1,5 +1,4 @@
-// Copyright lowRISC contributors.
-// Modified by Fraunhofer AISEC.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -324,7 +323,7 @@ module otbn_predecode
               // BN.ADDM/BN.SUBM
               rf_ren_a_bignum                = 1'b1;
               rf_ren_b_bignum                = 1'b1;
-              rf_we_a_bignum                   = 1'b1;
+              rf_we_a_bignum                     = 1'b1;
               alu_bignum_shift_amt           = shift_amt_a_type_bignum;
               alu_bignum_adder_x_en          = 1'b1;
               alu_bignum_x_res_operand_a_sel = 1'b1;
@@ -346,7 +345,7 @@ module otbn_predecode
               ctrl_flow_target_predec_o = loop_end_addr[ImemAddrWidth-1:0];
             end
             3'b010, 3'b100, 3'b110:  begin  // BN.AND/BN.OR/BN.XOR
-              rf_we_a_bignum                          = 1'b1;
+              rf_we_a_bignum                     = 1'b1;
               rf_ren_a_bignum                         = 1'b1;
               rf_ren_b_bignum                         = 1'b1;
               alu_bignum_shifter_b_en                 = 1'b1;
@@ -360,7 +359,7 @@ module otbn_predecode
               flags_logic_update[flag_group]          = 1'b1;
             end
             3'b111, 3'b011: begin // BN.RSHI
-              rf_we_a_bignum          = 1'b1;
+              rf_we_a_bignum                     = 1'b1;
               rf_ren_a_bignum         = 1'b1;
               rf_ren_b_bignum         = 1'b1;
               alu_bignum_shifter_a_en = 1'b1;
@@ -369,7 +368,7 @@ module otbn_predecode
               alu_bignum_shift_amt    = shift_amt_s_type_bignum;
             end
             3'b101: begin // BN.NOT
-              rf_we_a_bignum                          = 1'b1;
+              rf_we_a_bignum                     = 1'b1;
               rf_ren_b_bignum                         = 1'b1;
               alu_bignum_shifter_b_en                 = 1'b1;
               alu_bignum_shift_right                  = imem_rdata_i[30];
@@ -389,7 +388,7 @@ module otbn_predecode
         InsnOpcodeBignumMisc: begin
           unique case (imem_rdata_i[14:12])
             3'b000: begin // BN.SEL
-              rf_we_a_bignum    = 1'b1;
+              rf_we_a_bignum                     = 1'b1;
               rf_ren_a_bignum = 1'b1;
               rf_ren_b_bignum = 1'b1;
               sel_insn        = 1'b1;
@@ -433,7 +432,7 @@ module otbn_predecode
                   rf_we_b_base = 1'b1;
                 end
               end else begin // BN.MOV
-                rf_we_a_bignum    = 1'b1;
+                rf_we_a_bignum                     = 1'b1;
                 rf_ren_a_bignum = 1'b1;
               end
             end
@@ -442,7 +441,7 @@ module otbn_predecode
                 rf_ren_a_bignum = 1'b1;
                 ispr_wr_en      = 1'b1;
               end else begin  // BN.WSRR
-                rf_we_a_bignum = 1'b1;
+                rf_we_a_bignum                     = 1'b1;
                 ispr_rd_en   = 1'b1;
               end
             end
@@ -470,7 +469,6 @@ module otbn_predecode
             mac_bignum_acc_rd_en = 1'b1;
           end
         end
-
         ////////////////
         //   PQ ALU   //
         ////////////////

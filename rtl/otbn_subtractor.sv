@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 
-module adder
+module otbn_subtractor
 #(
     parameter DATA_WIDTH = 32
 )
@@ -14,14 +14,14 @@ module adder
     output  logic   [DATA_WIDTH-1:0]    res_o
 );
 
-    logic   [DATA_WIDTH-1:0]    add;
+    logic   [DATA_WIDTH-1:0]    adds;
     logic   [DATA_WIDTH-1:0]    sub;
 
 always_comb
-begin    
-    add = op0_i + op1_i;
-    sub = add - q_i;
-    res_o = (add < q_i) ? add : sub;
+begin  
+    adds = (op0_i + q_i) - op1_i;
+    sub = adds - q_i;
+    res_o = (adds < q_i) ? adds : sub;
 end
 
-endmodule: adder
+endmodule: otbn_subtractor

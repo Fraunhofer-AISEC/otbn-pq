@@ -12,6 +12,7 @@
 /*        Load Constants for SampleInBall        */
 /*************************************************/
 
+/* ToDo: Move Down before UseHint loop */
 /* Address to store w1 */
 li x29, 28672
 
@@ -100,6 +101,12 @@ li x26, 19456
 
 /*************************************************/
 /*SampleInBall and NTT of Challenge Coefficients */
+/*
+* ToDo: 
+*   - Loading of inital state over loop
+*   - Absorb message function
+*   - Check which modulo (whether centered recuction necessary)
+*/
 /*************************************************/
 
 /*                Load Inital State              */
@@ -302,7 +309,7 @@ loopi 32, 2
 /*
 *   - Add correct header 
 *
-* Note: DONT TOUCH x26 and x7 !!!
+* Note: DONT TOUCH x26 and x7 !!!!!!!!!!!!!!!!!!
 */
 /*************************************************/
 
@@ -315,7 +322,7 @@ li x2, 0
 li x22, 0
 
 /* For i in 0 to k */
-loopi 4, 203
+loopi 4, 205
 
   /* Init w_acc_coef_0_0 */
 
@@ -363,6 +370,7 @@ loopi 4, 203
     
         
     /* Load Signature Coefficients in WDRs */
+    /*ToDo: Update depending on K*/
     la x31, signature_coef_0_0
     slli x30, x7, 10
     add x31, x31, x30
@@ -395,7 +403,7 @@ loopi 4, 203
     
     /* la x4, signature_coef_0_0 */
     li x4, 17408
-
+    /* ToDo: Adapt Address */
     slli x9, x0, 10
     add x4, x4, x9
     /* la x5, A_coeff_0 */
@@ -471,7 +479,7 @@ loopi 4, 203
   /* Load 2^d into Scale PQSR */
   pq.pqsrw 7, w0
 
-  /* Load t1 into WDRs */
+  /* ToDo: Load t1 into WDRs depending on k and l */
   la x31, t1_coef_0_0
   slli x30, x23, 10
   add x31, x31, x30
@@ -604,6 +612,7 @@ loopi 4, 203
   li x4, 20480
 
   /* Address of Hint Coefficients */
+  /* ToDo: Depending on K*/
   la x5, hint0
   slli x30, x23, 5
   add x5, x5, x30
@@ -685,13 +694,52 @@ loopi 4, 203
       /* Load prime into PQSR*/
       pq.pqsrw 0, w0
       
-      li x31, 0
-      li x31, 1
+      li x31, 7
+      li x31, 8
+      li x31, 7
+      li x31, 8
    
   /* Increment and reset loop variables */
   addi x23, x23, 1
   li x7, 0 
   
+li x31, 7
+li x31, 8
+li x31, 9
+li x31, 10
+li x31, 11
+li x31, 12
+li x31, 13
+li x31, 14
+li x31, 15
+li x31, 7
+li x31, 8
+li x31, 9
+li x31, 10
+li x31, 11
+li x31, 12
+li x31, 13
+li x31, 14
+li x31, 15
+li x31, 7
+li x31, 8
+li x31, 9
+li x31, 10
+li x31, 11
+li x31, 12
+li x31, 13
+li x31, 14
+li x31, 15
+li x31, 7
+li x31, 8
+li x31, 9
+li x31, 10
+li x31, 11
+li x31, 12
+li x31, 13
+li x31, 14
+li x31, 15
+
 /* Padding of Message */
 
 /* Load allzero state into WDRs w10 - w19 */
@@ -2701,6 +2749,7 @@ ret
 .section .data
 
 /* Constants */
+.globl prime
 prime:
   .quad 0x00000000007fe001
   .quad 0x0000000000000000
@@ -2811,6 +2860,7 @@ allzero:
 
 
 /* Challenge Seed */
+.globl challenge_seed
 challenge_seed:
 .word 0xc5eb439f
 .word 0x4d8ec3b0
@@ -2821,7 +2871,8 @@ challenge_seed:
 .word 0x8ce17103
 .word 0xf4c2d7b6
 
-/* Rho (Seed) */  
+/* Rho (Seed) */
+.globl expanda_seed  
 expanda_seed:
 .word 0xf1b4b637
 .word 0x4f6e545b
@@ -2833,6 +2884,7 @@ expanda_seed:
 .word 0x420ec1ad
 
 /* Nonce */  
+.globl expanda_nonce 
 expanda_nonce:
   .quad 0x0000000000000000
   .quad 0x0000000000000000
@@ -2840,6 +2892,7 @@ expanda_nonce:
   .quad 0x0000000000000000
 
 /* Mu */  
+.globl digest_message
 digest_message:
 .word 0xdbbeaece
 .word 0x8d03382a
@@ -2862,6 +2915,7 @@ digest_message:
 .word 0x0 
 
 /* hint */
+.globl hint0
 hint0:
 .word 0x100000
 .word 0x4000
@@ -3149,6 +3203,7 @@ challenge_coef_31:
   .quad 0x000000FD000000FC
   .quad 0x000000FF000000FE
 
+.globl signature_coef_0_0
 signature_coef_0_0:
 .word 0x7f9914
 .word 0x5610
@@ -4182,6 +4237,7 @@ expand_a_temp:
 .quad 0x0000000000000000
 .quad 0x0000000000000000
 
+.globl t1_coef_0_0
 t1_coef_0_0:
 .word 0xc8
 .word 0x2a5

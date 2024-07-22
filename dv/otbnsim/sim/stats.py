@@ -1,4 +1,4 @@
-# Copyright lowRISC contributors.
+# Copyright lowRISC contributors (OpenTitan project).
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
@@ -268,8 +268,6 @@ class ExecutionStatAnalyzer:
             return "No functions were called.\n"
 
         out = ""
-
-        # TODO: Add the start address as function?
 
         # Build function call graphs and a call site index
         # caller-indexed == forward, callee-indexed == reverse

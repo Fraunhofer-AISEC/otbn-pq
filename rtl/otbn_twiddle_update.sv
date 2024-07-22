@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 
-module twiddle_update
+module otbn_twiddle_update
     import otbn_pq_pkg::*;
 (   
     input   logic                       clk_i,
@@ -198,7 +198,7 @@ module twiddle_update
             default: omega_onehot = 8'b00000000;
         endcase   
     end
-    multiplier #(.DATA_WIDTH(PQLEN), .LOG_R(LOG_R)) U_UPDATE_TWIDDLE(
+    otbn_multiplier #(.DATA_WIDTH(PQLEN), .LOG_R(LOG_R)) U_UPDATE_TWIDDLE(
         .op0_i(twiddle_q),
         .op1_i(omega),
         .q_i(prime_q),
@@ -206,7 +206,7 @@ module twiddle_update
         .res_o(twiddle_mul)  
     ); 
     
-    multiplier #(.DATA_WIDTH(PQLEN), .LOG_R(LOG_R)) U_UPDATE_OMEGA(
+    otbn_multiplier #(.DATA_WIDTH(PQLEN), .LOG_R(LOG_R)) U_UPDATE_OMEGA(
         .op0_i(omega),
         .op1_i(omega),
         .q_i(prime_q),
@@ -523,11 +523,11 @@ module twiddle_update
             IsprOmegaIdx:     ispr_rdata_o = {253'b0, omega_idx_q};
             IsprPsiIdx:       ispr_rdata_o = {253'b0, psi_idx_q};
             IsprConst:        ispr_rdata_o = {224'b0, const_q};
-            IsprRc:           ispr_rdata_o = {192'b0, rc_q};
+            IsprRc:           ispr_rdata_o = rc_q;
             IsprRcIdx:        ispr_rdata_o = {254'b0, rc_idx_q};
             default: ;
         endcase
     end
 
 
-endmodule: twiddle_update
+endmodule: otbn_twiddle_update

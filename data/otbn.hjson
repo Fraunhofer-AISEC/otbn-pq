@@ -1,8 +1,46 @@
-// Copyright lowRISC contributors.
-// Modyfied by Fraunhofer AISEC.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
-{ name: "otbn"
+{
+  name:               "otbn",
+  human_name:         "OpenTitan Big Number Accelerator",
+  one_line_desc:      "Programmable coprocessor for asymmetric cryptography with SCA and FI countermeasures",
+  one_paragraph_desc: '''
+  OpenTitan Big Number Accelerator (OTBN) is a programmable coprocessor for asymmetric cryptographic algorithms such as RSA or elliptic curve cryptography (ECC).
+  Such algorithms are dominated by wide integer arithmetic, which are executed on OTBN's 256-bit-wide data path.
+  The data OTBN processes is often security sensitive, and OTBN is designed to reduce the attack surface by
+  (1) keeping the instruction set and the processor design as simple as possible to aid verification,
+  (2) minimizing control flow and clearly separating it from data flow,
+  (3) limiting OTBN's instruction fetch and data memory accesses to separate, dedicated on-chip memories,
+  (4) giving OTBN software direct access to cryptographically secure random numbers,
+  and (5) implementing various hardware countermeasures to deter side-channel analysis (SCA) and fault injection (FI) attacks.
+  '''
+  // Unique comportable IP identifier defined under KNOWN_CIP_IDS in the regtool.
+  cip_id:             "15",
+  design_spec:        "../doc",
+  dv_doc:             "../doc/dv",
+  hw_checklist:       "../doc/checklist",
+  sw_checklist:       "/sw/device/lib/dif/dif_otbn"
+  revisions: [
+      {
+          version:            "0.1.0",
+          life_stage:         "L1",
+          design_stage:       "D1",
+          verification_stage: "V1",
+          dif_stage:          "S1",
+          commit_id:          "a46be154ebbcb7b0d5e310b5510a4ac700adc9df",
+          notes:              ""
+      },
+      {
+          version:            "1.0.0",
+          life_stage:         "L1",
+          design_stage:       "D2S",
+          verification_stage: "V1",
+          dif_stage:          "S2",
+          commit_id:          "a6b908283fccba3f8b6b44052c6ad87276dc21e8",
+          notes:              ""
+      },
+  ]
   clocking: [
     {clock: "clk_i", reset: "rst_ni", idle: "idle_o", primary: true},
     {clock: "clk_edn_i", reset: "rst_edn_ni", idle: "idle_o"},
@@ -34,6 +72,28 @@
       randcount: "256",
       randtype:  "data"
     },
+    { name:    "SecMuteUrnd"
+      type:    "bit"
+      default: "0"
+      desc: '''
+        If enabled (1), URND is advanced only when data is needed.
+        Disabled (0) by default.
+        Useful for SCA measurements only.
+        '''
+      local:   "false"
+      expose:  "true"
+    }
+    { name:    "SecSkipUrndReseedAtStart"
+      type:    "bit"
+      default: "0"
+      desc: '''
+        If enabled (1), URND reseed is skipped at the start of an operation.
+        Disabled (0) by default.
+        Useful for SCA measurements only.
+        '''
+      local:   "false"
+      expose:  "true"
+    }
     { name: "RndCnstOtbnKey",
       type: "otp_ctrl_pkg::otbn_key_t",
       desc: '''
@@ -141,6 +201,32 @@
       package: "keymgr_pkg"
     },
   ],
+  features: [
+    {
+      name: "OTBN.ISA"
+      desc: '''
+        OTBN implements a custom ISA based on RV32I. It is split into base (32-bit) and bignum
+        (256-bit) parts. There is a separate register file for each.
+      ''',
+      name: "OTBN.RANDOM"
+      desc: '''
+        OTBN has a connection to the EDN allowing it to receive 256-bits of entropy.
+      '''
+      name: "OTBN.KEYMGR"
+      desc: '''
+        OTBN has a connection to the keymgr and it can receive key material from it.
+      '''
+      name: "OTBN.SECUREWIPE"
+      desc: '''
+        OTBN has a secure wipe facility that can target the internal state as well as the
+        instruction and data memories.
+      '''
+      name: "OTBN.MEM_SCRAMBLE"
+      desc: '''
+        OTBN scrambles its instruction and data memories using keys received from OTP.
+      '''
+    }
+  ]
   countermeasures: [
     { name: "MEM.SCRAMBLE",
       desc: "Both the imem and dmem are scrambled by using prim_ram_1p_scr."
@@ -331,37 +417,11 @@
           desc: '''
             The operation to perform.
 
-            <table>
-              <thead>
-                <tr>
-                  <th>Value</th>
-                  <th>Name</th>
-                  <th>Description</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>0xd8</td>
-                  <td>EXECUTE</td>
-                  <td>
-                    Starts the execution of the program stored in the
-                    instruction memory, starting at address zero.
-                  </td>
-                </tr>
-                <tr>
-                  <td>0xc3</td>
-                  <td>SEC_WIPE_DMEM</td>
-                  <td>Securely removes all contents from the data memory.</td>
-                </tr>
-                <tr>
-                  <td>0x1e</td>
-                  <td>SEC_WIPE_IMEM</td>
-                  <td>
-                    Securely removes all contents from the instruction memory.
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            | Value | Name          | Description |
+            |:------|:--------------|:------------|
+            | 0xd8  | EXECUTE       | Starts the execution of the program stored in the instruction memory, starting at address zero. |
+            | 0xc3  | SEC_WIPE_DMEM | Securely removes all contents from the data memory. |
+            | 0x1e  | SEC_WIPE_IMEM | Securely removes all contents from the instruction  memory. |
           '''
           tags: [
             // Don't write this field in the automated CSR tests: it would
@@ -414,51 +474,15 @@
             All BUSY values represent an operation started by a write to the
             !!CMD register.
 
-            <table>
-              <thead>
-                <tr>
-                  <th>Value</th>
-                  <th>Name</th>
-                  <th>Description</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>0x00</td>
-                  <td>IDLE</td>
-                  <td>OTBN is idle: it is not performing any action.</td>
-                </tr>
-                <tr>
-                  <td>0x01</td>
-                  <td>BUSY_EXECUTE</td>
-                  <td>OTBN is busy executing software.</td>
-                </tr>
-                <tr>
-                  <td>0x02</td>
-                  <td>BUSY_SEC_WIPE_DMEM</td>
-                  <td>OTBN is busy securely wiping the data memory.</td>
-                </tr>
-                <tr>
-                  <td>0x03</td>
-                  <td>BUSY_SEC_WIPE_IMEM</td>
-                  <td>OTBN is busy securely wiping the instruction memory.</td>
-                </tr>
-                <tr>
-                  <td>0x04</td>
-                  <td>BUSY_SEC_WIPE_INT</td>
-                  <td>OTBN is busy securely wiping the internal state.</td>
-                </tr>
-                <tr>
-                  <td>0xFF</td>
-                  <td>LOCKED</td>
-                  <td>
-                    OTBN is locked as reaction to a fatal error, and must be
-                    reset to unlock it again. See also the section
-                    "Reaction to Fatal Errors".
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            | Value | Name               | Description                                           |
+            |:------|:-------------------|:------------------------------------------------------|
+            | 0x00  | IDLE               | OTBN is idle: it is not performing any action.        |
+            | 0x01  | BUSY_EXECUTE       | OTBN is busy executing software.                      |
+            | 0x02  | BUSY_SEC_WIPE_DMEM | OTBN is busy securely wiping the data memory.         |
+            | 0x03  | BUSY_SEC_WIPE_IMEM | OTBN is busy securely wiping the instruction memory.  |
+            | 0x04  | BUSY_SEC_WIPE_INT  | OTBN is busy securely wiping the internal state.      |
+            | 0xFF  | LOCKED             | OTBN is locked as reaction to a fatal error, and must be reset to unlock it again. See also the section "Reaction to Fatal Errors". |
+
           '''
           tags: [
             // Exclude this field from the automated CSR tests. The register model does not know
@@ -743,7 +767,7 @@
           If OTBN is busy, any access additionally triggers an
           ILLEGAL_BUS_ACCESS fatal error.
 
-          Note that DMEM is actually 32kiB in size, but only the first 32kiB of
+          Note that DMEM is actually 4kiB in size, but only the first 3kiB of
           the memory is visible through this register interface.
         '''
       }

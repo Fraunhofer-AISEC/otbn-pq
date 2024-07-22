@@ -4,7 +4,7 @@
 
 /* INTT Implementation of Dilithium */
 
-.section .text
+.section .text.start
 
 /*************************************************/
 /*        Load Constants for Configuration       */
@@ -216,7 +216,8 @@ psi:
   .quad 0x0000000000000000
   .quad 0x0000000000000000
   .quad 0x0000000000000000
-
+  
+.globl coef0
 coef0:
   .quad 0x004b87b6007a6f0f
   .quad 0x006e487e0053fad1

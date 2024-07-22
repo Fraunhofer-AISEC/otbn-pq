@@ -6,12 +6,13 @@
 /* Dilithium-III Verify Implementation */
 
 
-.section .text.start
+.section .text
 
 /*************************************************/
 /*        Load Constants for SampleInBall        */
 /*************************************************/
 
+/* ToDo: Move Down before UseHint loop */
 /* Address to store w1 */
 li x29, 28672
 
@@ -100,6 +101,12 @@ li x26, 19456
 
 /*************************************************/
 /*SampleInBall and NTT of Challenge Coefficients */
+/*
+* ToDo: 
+*   - Loading of inital state over loop
+*   - Absorb message function
+*   - Check which modulo (whether centered recuction necessary)
+*/
 /*************************************************/
 
 /*                Load Inital State              */
@@ -315,7 +322,7 @@ li x2, 0
 li x22, 0
 
 /* For i in 0 to k */
-loopi 6, 203
+loopi 6, 205
 
   /* Init w_acc_coef_0_0 */
 
@@ -394,7 +401,7 @@ loopi 6, 203
     
     /* la x4, signature_coef_0_0 */
     li x4, 17408
-
+    /* ToDo: Adapt Address */
     slli x9, x0, 10
     add x4, x4, x9
     /* la x5, A_coeff_0 */
@@ -470,7 +477,7 @@ loopi 6, 203
   /* Load 2^d into Scale PQSR */
   pq.pqsrw 7, w0
 
-  /* Load t1 into WDRs */
+  /* ToDo: Load t1 into WDRs depending on k and l */
   la x31, t1_coef_0_0
   slli x30, x23, 10
   add x31, x31, x30
@@ -486,6 +493,7 @@ loopi 6, 203
 
   /* Store Signature Coefficients in DMEM */
   li x31, 25600
+  /* ToDo: Add offset depending on k and l */
     
   li x2, 0
   loopi 32, 2
@@ -510,6 +518,7 @@ loopi 6, 203
 
   /* Store Signature Coefficients in DMEM */
   li x31, 24576
+  /* ToDo: Add offset depending on k and l */
     
   li x2, 0
   loopi 32, 2
@@ -683,13 +692,52 @@ loopi 6, 203
       /* Load prime into PQSR*/
       pq.pqsrw 0, w0
       
-      li x31, 0
-      li x31, 1
+      li x31, 7
+      li x31, 8
+      li x31, 7
+      li x31, 8
    
   /* Increment and reset loop variables */
   addi x23, x23, 1
   li x7, 0 
   
+li x31, 7
+li x31, 8
+li x31, 9
+li x31, 10
+li x31, 11
+li x31, 12
+li x31, 13
+li x31, 14
+li x31, 15
+li x31, 7
+li x31, 8
+li x31, 9
+li x31, 10
+li x31, 11
+li x31, 12
+li x31, 13
+li x31, 14
+li x31, 15
+li x31, 7
+li x31, 8
+li x31, 9
+li x31, 10
+li x31, 11
+li x31, 12
+li x31, 13
+li x31, 14
+li x31, 15
+li x31, 7
+li x31, 8
+li x31, 9
+li x31, 10
+li x31, 11
+li x31, 12
+li x31, 13
+li x31, 14
+li x31, 15
+
 /* Padding of Message */
 
 /* Load allzero state into WDRs w10 - w19 */

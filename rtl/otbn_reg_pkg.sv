@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -33,11 +33,11 @@ package otbn_reg_pkg;
     struct packed {
       logic        q;
       logic        qe;
-    } fatal;
+    } recov;
     struct packed {
       logic        q;
       logic        qe;
-    } recov;
+    } fatal;
   } otbn_reg2hw_alert_test_reg_t;
 
   typedef struct packed {
@@ -54,59 +54,7 @@ package otbn_reg_pkg;
     struct packed {
       logic        q;
       logic        qe;
-    } bad_data_addr;
-    struct packed {
-      logic        q;
-      logic        qe;
-    } bad_insn_addr;
-    struct packed {
-      logic        q;
-      logic        qe;
-    } call_stack;
-    struct packed {
-      logic        q;
-      logic        qe;
-    } illegal_insn;
-    struct packed {
-      logic        q;
-      logic        qe;
-    } loop;
-    struct packed {
-      logic        q;
-      logic        qe;
-    } key_invalid;
-    struct packed {
-      logic        q;
-      logic        qe;
-    } rnd_rep_chk_fail;
-    struct packed {
-      logic        q;
-      logic        qe;
-    } rnd_fips_chk_fail;
-    struct packed {
-      logic        q;
-      logic        qe;
-    } imem_intg_violation;
-    struct packed {
-      logic        q;
-      logic        qe;
-    } dmem_intg_violation;
-    struct packed {
-      logic        q;
-      logic        qe;
-    } reg_intg_violation;
-    struct packed {
-      logic        q;
-      logic        qe;
-    } bus_intg_violation;
-    struct packed {
-      logic        q;
-      logic        qe;
-    } bad_internal_state;
-    struct packed {
-      logic        q;
-      logic        qe;
-    } illegal_bus_access;
+    } fatal_software;
     struct packed {
       logic        q;
       logic        qe;
@@ -114,7 +62,59 @@ package otbn_reg_pkg;
     struct packed {
       logic        q;
       logic        qe;
-    } fatal_software;
+    } illegal_bus_access;
+    struct packed {
+      logic        q;
+      logic        qe;
+    } bad_internal_state;
+    struct packed {
+      logic        q;
+      logic        qe;
+    } bus_intg_violation;
+    struct packed {
+      logic        q;
+      logic        qe;
+    } reg_intg_violation;
+    struct packed {
+      logic        q;
+      logic        qe;
+    } dmem_intg_violation;
+    struct packed {
+      logic        q;
+      logic        qe;
+    } imem_intg_violation;
+    struct packed {
+      logic        q;
+      logic        qe;
+    } rnd_fips_chk_fail;
+    struct packed {
+      logic        q;
+      logic        qe;
+    } rnd_rep_chk_fail;
+    struct packed {
+      logic        q;
+      logic        qe;
+    } key_invalid;
+    struct packed {
+      logic        q;
+      logic        qe;
+    } loop;
+    struct packed {
+      logic        q;
+      logic        qe;
+    } illegal_insn;
+    struct packed {
+      logic        q;
+      logic        qe;
+    } call_stack;
+    struct packed {
+      logic        q;
+      logic        qe;
+    } bad_insn_addr;
+    struct packed {
+      logic        q;
+      logic        qe;
+    } bad_data_addr;
   } otbn_reg2hw_err_bits_reg_t;
 
   typedef struct packed {
@@ -307,8 +307,10 @@ package otbn_reg_pkg;
   // Window parameters
   parameter logic [BlockAw-1:0] OTBN_IMEM_OFFSET = 16'h 4000;
   parameter int unsigned        OTBN_IMEM_SIZE   = 'h 2000;
+  parameter int unsigned        OTBN_IMEM_IDX    = 0;
   parameter logic [BlockAw-1:0] OTBN_DMEM_OFFSET = 16'h 8000;
   parameter int unsigned        OTBN_DMEM_SIZE   = 'h 8000;
+  parameter int unsigned        OTBN_DMEM_IDX    = 1;
 
   // Register index
   typedef enum int {

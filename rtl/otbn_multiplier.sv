@@ -2,8 +2,9 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
+/* verilator lint_off UNUSED */
 
-module multiplier
+module otbn_multiplier
 #(
     parameter DATA_WIDTH = 32,
     parameter LOG_R = 32
@@ -18,7 +19,7 @@ module multiplier
 
 logic   [2*DATA_WIDTH-1:0]          p;
 logic   [2*LOG_R-1:0]               m;
-logic   [2*DATA_WIDTH+LOG_R:0]      s;
+logic   [DATA_WIDTH+LOG_R:0]        s;
 logic   [DATA_WIDTH-1:0]            t;
 
 always_comb
@@ -34,4 +35,4 @@ end
 
 assign res_o = t;
 
-endmodule: multiplier
+endmodule: otbn_multiplier

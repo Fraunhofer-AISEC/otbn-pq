@@ -1,5 +1,4 @@
-// Copyright lowRISC contributors.
-// Modified by Fraunhofer AISEC.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -18,7 +17,7 @@
  *
  * Features:
  * - 2 read ports
- * - 2 write port
+ * - 1 write port
  * - triple error detection
  */
 
@@ -68,7 +67,6 @@ module otbn_rf_bignum
   logic [NWdr-1:0]               expected_wr_en_a_onehot, expected_wr_en_b_onehot;
   logic                          rd_en_a_mismatch, rd_en_b_mismatch, wr_en_a_mismatch, wr_en_b_mismatch;
 
-
   assign wr_en_a_internal = wr_en_a_i & {8{wr_commit_i}};
   assign wr_en_b_internal = wr_en_b_i & {8{wr_commit_i}};
 
@@ -76,7 +74,7 @@ module otbn_rf_bignum
     otbn_rf_bignum_ff u_otbn_rf_bignum_inner (
       .clk_i,
       .rst_ni,
-
+      
       .wr_addr_a_i,
       .wr_addr_b_i,
       .wr_en_a_i(wr_en_a_internal),
@@ -158,7 +156,6 @@ module otbn_rf_bignum
   // New data can have its integrity from an external source or the integrity can be calculated here
   assign wr_data_a_intg_mux_out = wr_data_a_intg_sel_i ? wr_data_a_intg_i : wr_data_a_intg_calc;
   assign wr_data_b_intg_mux_out = wr_data_b_intg_sel_i ? wr_data_b_intg_i : wr_data_b_intg_calc;
-  
 
   // SEC_CM: RF_BIGNUM.DATA_REG_SW.INTEGRITY
   // Separate integrity encode and decode per 32-bit integrity granule

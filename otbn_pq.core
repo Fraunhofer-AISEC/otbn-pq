@@ -11,15 +11,15 @@ filesets:
     depend:
       - aisec:ip:otbn_pq_pkg:0.1
     files:
-      - rtl/adder.sv
-      - rtl/subtractor.sv
-      - rtl/bitreverse.sv
-      - rtl/multiplier.sv
-      - rtl/reg_addr_unit.sv
-      - rtl/twiddle_update.sv
-      - rtl/pq_alu.sv
-      - rtl/keccak_lane_unit.sv
-      - rtl/keccak_plane_unit.sv
+      - rtl/otbn_adder.sv
+      - rtl/otbn_subtractor.sv
+      - rtl/otbn_bitreverse.sv
+      - rtl/otbn_multiplier.sv
+      - rtl/otbn_reg_addr_unit.sv
+      - rtl/otbn_twiddle_update.sv
+      - rtl/otbn_pq_alu.sv
+      - rtl/otbn_keccak_lane_unit.sv
+      - rtl/otbn_keccak_plane_unit.sv
     file_type: systemVerilogSource
 
   files_rtl_core:

@@ -24,6 +24,7 @@ module otbn_predecode
   output ispr_predec_bignum_t      ispr_predec_bignum_o,
   output mac_predec_bignum_t       mac_predec_bignum_o,
   output alu_predec_pq_t           alu_predec_pq_o,
+  output trcu_predec_pq_t          trcu_predec_pq_o,
   output logic                     lsu_addr_en_predec_o,
   output ctrl_flow_predec_t        ctrl_flow_predec_o,
   output logic [ImemAddrWidth-1:0] ctrl_flow_target_predec_o
@@ -81,6 +82,10 @@ module otbn_predecode
   logic alu_pq_ct_sub_op_en;
   logic alu_pq_mul_op_en;
   logic alu_pq_add_op_en;
+
+  logic trcu_sub_op_en;
+  logic trcu_mul_omega_op_en;
+  logic trcu_mul_twiddle_op_en;
 
   logic ispr_rd_en;
   logic ispr_wr_en;
@@ -180,6 +185,10 @@ module otbn_predecode
     alu_pq_ct_sub_op_en = 1'b0;
     alu_pq_mul_op_en = 1'b0;
     alu_pq_add_op_en = 1'b0;
+
+    trcu_sub_op_en = 1'b0;
+    trcu_mul_omega_op_en = 1'b0;
+    trcu_mul_twiddle_op_en = 1'b0;
 
     ispr_rd_en = 1'b0;
     ispr_wr_en = 1'b0;
@@ -525,6 +534,10 @@ module otbn_predecode
           alu_pq_ct_sub_op_en = 1'b1;
           alu_pq_mul_op_en = 1'b1;
           alu_pq_add_op_en = 1'b1;
+
+          trcu_mul_omega_op_en = imem_rdata_i[13];
+          trcu_mul_twiddle_op_en = imem_rdata_i[14];
+
         end
 
         InsnOpcodePqGSBF: begin
@@ -537,6 +550,9 @@ module otbn_predecode
           alu_pq_ct_sub_op_en = 1'b0;
           alu_pq_mul_op_en = 1'b1;
           alu_pq_add_op_en = 1'b1;
+
+          trcu_mul_omega_op_en = imem_rdata_i[13];
+          trcu_mul_twiddle_op_en = imem_rdata_i[14];
         end      
 
         InsnOpcodePqBaseMisc: begin
@@ -544,7 +560,14 @@ module otbn_predecode
             rf_ren_a_bignum   = 1'b1;
           end else if(imem_rdata_i[31:30] == 2'b00) begin // PQ.PQSRR
             rf_we_a_bignum = 1'b1;
+          end else if(imem_rdata_i[31:30] == 2'b11) begin // PQ.PQSRU
+
+            trcu_mul_omega_op_en = imem_rdata_i[13];
+            trcu_sub_op_en = imem_rdata_i[25];
+            trcu_mul_twiddle_op_en = imem_rdata_i[14];
+
           end
+
         end
         
         InsnOpcodePqBaseCTRL: begin
@@ -639,6 +662,10 @@ module otbn_predecode
   assign alu_predec_pq_o.ct_sub_op_en = alu_pq_ct_sub_op_en;
   assign alu_predec_pq_o.mul_op_en = alu_pq_mul_op_en;
   assign alu_predec_pq_o.add_op_en = alu_pq_add_op_en;
+
+  assign trcu_predec_pq_o.sub_op_en = trcu_sub_op_en;
+  assign trcu_predec_pq_o.mul_omega_op_en = trcu_mul_omega_op_en;
+  assign trcu_predec_pq_o.mul_twiddle_op_en = trcu_mul_twiddle_op_en;
 
   assign insn_rs1 = imem_rdata_i[19:15];
   assign insn_rs2 = imem_rdata_i[24:20];

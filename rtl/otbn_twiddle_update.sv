@@ -8,7 +8,9 @@ module otbn_twiddle_update
 (   
     input   logic                       clk_i,
     input   logic                       rst_ni,
-    
+
+    input   trcu_predec_pq_t            trcu_predec_pq_i,
+
     input   logic                       update_omega_i,
     input   logic                       update_psi_i,
     input   logic                       set_twiddle_as_psi_i,
@@ -198,23 +200,70 @@ module otbn_twiddle_update
             default: omega_onehot = 8'b00000000;
         endcase   
     end
+
+  // Blanking for Update Twiddle
+  logic [PQLEN-1:0] upd_twiddle_op_a_blanked;
+  logic [PQLEN-1:0] upd_twiddle_op_b_blanked;
+
+  // SEC_CM: DATA_REG_SW.SCA
+  prim_blanker #(.Width(PQLEN)) u_upd_twiddle_operand_a_blanker (
+    .in_i (twiddle_q),
+    .en_i (trcu_predec_pq_i.mul_twiddle_op_en),
+    .out_o(upd_twiddle_op_a_blanked)
+  );
+
+  // SEC_CM: DATA_REG_SW.SCA
+  prim_blanker #(.Width(PQLEN)) u_upd_twiddle_operand_b_blanker (
+    .in_i (omega),
+    .en_i (trcu_predec_pq_i.mul_twiddle_op_en),
+    .out_o(upd_twiddle_op_b_blanked)
+  );
+
     otbn_multiplier #(.DATA_WIDTH(PQLEN), .LOG_R(LOG_R)) U_UPDATE_TWIDDLE(
-        .op0_i(twiddle_q),
-        .op1_i(omega),
+        .op0_i(upd_twiddle_op_a_blanked),
+        .op1_i(upd_twiddle_op_b_blanked),
         .q_i(prime_q),
         .q_dash_i(prime_dash_q),
         .res_o(twiddle_mul)  
     ); 
-    
+    // Blanking for Update Omega
+    logic [PQLEN-1:0] upd_omega_op_blanked;
+
+    // SEC_CM: DATA_REG_SW.SCA
+    prim_blanker #(.Width(PQLEN)) u_upd_omega_operand_b_blanker (
+      .in_i (omega),
+      .en_i (trcu_predec_pq_i.mul_omega_op_en),
+      .out_o(upd_omega_op_blanked)
+    );
+
     otbn_multiplier #(.DATA_WIDTH(PQLEN), .LOG_R(LOG_R)) U_UPDATE_OMEGA(
-        .op0_i(omega),
-        .op1_i(omega),
+        .op0_i(upd_omega_op_blanked),
+        .op1_i(upd_omega_op_blanked),
         .q_i(prime_q),
         .q_dash_i(prime_dash_q),
         .res_o(omega_mul)  
     );   
-     
-    assign twiddle_inv = prime_q - twiddle_q;
+
+
+    // Blanking for Update Twiddle
+    logic [PQLEN-1:0] inv_twiddle_op_a_blanked;
+    logic [PQLEN-1:0] inv_twiddle_op_b_blanked;
+
+    // SEC_CM: DATA_REG_SW.SCA
+    prim_blanker #(.Width(PQLEN)) u_inv_twiddle_operand_a_blanker (
+      .in_i (prime_q),
+      .en_i (trcu_predec_pq_i.sub_op_en),
+      .out_o(inv_twiddle_op_a_blanked)
+    );
+
+    // SEC_CM: DATA_REG_SW.SCA
+    prim_blanker #(.Width(PQLEN)) u_inv_twiddle_operand_b_blanker (
+      .in_i (twiddle_q),
+      .en_i (trcu_predec_pq_i.sub_op_en),
+      .out_o(inv_twiddle_op_b_blanked)
+    );
+
+    assign twiddle_inv = inv_twiddle_op_a_blanked - inv_twiddle_op_b_blanked;
 
 
     // Prime Register

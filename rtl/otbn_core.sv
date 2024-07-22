@@ -123,6 +123,7 @@ module otbn_core
   ispr_predec_bignum_t      ispr_predec_bignum;
   mac_predec_bignum_t       mac_predec_bignum;
   alu_predec_pq_t           alu_predec_pq;
+  trcu_predec_pq_t          trcu_predec_pq;
   logic                     lsu_addr_en_predec;
 
   logic [NWdr-1:0] rf_bignum_rd_a_indirect_onehot;
@@ -453,6 +454,7 @@ module otbn_core
     .ispr_predec_bignum_o     (ispr_predec_bignum),
     .mac_predec_bignum_o      (mac_predec_bignum),
     .alu_predec_pq_o          (alu_predec_pq),
+    .trcu_predec_pq_o         (trcu_predec_pq),
     .lsu_addr_en_predec_o     (lsu_addr_en_predec),
 
     .rf_bignum_rd_a_indirect_onehot_i(rf_bignum_rd_a_indirect_onehot),
@@ -1112,7 +1114,9 @@ module otbn_core
   otbn_twiddle_update    u_otbn_twiddle_update_unit(
     .clk_i,
     .rst_ni,
-  
+    
+    .trcu_predec_pq_i     (trcu_predec_pq),
+
     .update_omega_i       (update_omega),
     .update_psi_i         (update_psi),
     .set_twiddle_as_psi_i (set_twiddle_as_psi),

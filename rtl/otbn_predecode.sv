@@ -6,6 +6,7 @@
 
 module otbn_predecode
   import otbn_pkg::*;
+  import otbn_pq_pkg::*;
 #(
   parameter int ImemSizeByte = 4096,
 
@@ -22,6 +23,7 @@ module otbn_predecode
   output alu_predec_bignum_t       alu_predec_bignum_o,
   output ispr_predec_bignum_t      ispr_predec_bignum_o,
   output mac_predec_bignum_t       mac_predec_bignum_o,
+  output alu_predec_pq_t           alu_predec_pq_o,
   output logic                     lsu_addr_en_predec_o,
   output ctrl_flow_predec_t        ctrl_flow_predec_o,
   output logic [ImemAddrWidth-1:0] ctrl_flow_target_predec_o
@@ -74,6 +76,11 @@ module otbn_predecode
 
   logic mac_bignum_op_en;
   logic mac_bignum_acc_rd_en;
+
+  logic alu_pq_gs_sub_op_en;
+  logic alu_pq_ct_sub_op_en;
+  logic alu_pq_mul_op_en;
+  logic alu_pq_add_op_en;
 
   logic ispr_rd_en;
   logic ispr_wr_en;
@@ -168,6 +175,11 @@ module otbn_predecode
 
     mac_bignum_op_en     = 1'b0;
     mac_bignum_acc_rd_en = 1'b0;
+
+    alu_pq_gs_sub_op_en = 1'b0;
+    alu_pq_ct_sub_op_en = 1'b0;
+    alu_pq_mul_op_en = 1'b0;
+    alu_pq_add_op_en = 1'b0;
 
     ispr_rd_en = 1'b0;
     ispr_wr_en = 1'b0;
@@ -477,18 +489,30 @@ module otbn_predecode
           rf_we_a_bignum  = 1'b1;
           rf_ren_a_bignum = 1'b1;
           rf_ren_b_bignum = 1'b1;  
+          alu_pq_gs_sub_op_en = 1'b0;
+          alu_pq_ct_sub_op_en = 1'b0;
+          alu_pq_mul_op_en = 1'b0;
+          alu_pq_add_op_en = 1'b1;
         end
       
         InsnOpcodePqSub: begin
           rf_we_a_bignum  = 1'b1;
           rf_ren_a_bignum = 1'b1;
           rf_ren_b_bignum = 1'b1;
+          alu_pq_gs_sub_op_en = 1'b0;
+          alu_pq_ct_sub_op_en = 1'b1;
+          alu_pq_mul_op_en = 1'b0;
+          alu_pq_add_op_en = 1'b0;
         end     
           
         InsnOpcodePqMul: begin
           rf_we_a_bignum  = 1'b1;
           rf_ren_a_bignum = 1'b1;
-          rf_ren_b_bignum = 1'b1;     
+          rf_ren_b_bignum = 1'b1;
+          alu_pq_gs_sub_op_en = 1'b0;
+          alu_pq_ct_sub_op_en = 1'b0;
+          alu_pq_mul_op_en = 1'b1;
+          alu_pq_add_op_en = 1'b0;
         end
 
         InsnOpcodePqCTBF: begin       
@@ -496,7 +520,11 @@ module otbn_predecode
           rf_we_b_bignum  = 1'b1;
           rf_ren_a_bignum = 1'b1;
           rf_ren_b_bignum = 1'b1;   
-          pq_alu_inplace  = 1'b1;    
+          pq_alu_inplace  = 1'b1;
+          alu_pq_gs_sub_op_en = 1'b0;
+          alu_pq_ct_sub_op_en = 1'b1;
+          alu_pq_mul_op_en = 1'b1;
+          alu_pq_add_op_en = 1'b1;
         end
 
         InsnOpcodePqGSBF: begin
@@ -505,6 +533,10 @@ module otbn_predecode
           rf_ren_a_bignum = 1'b1;
           rf_ren_b_bignum = 1'b1;  
           pq_alu_inplace  = 1'b1;
+          alu_pq_gs_sub_op_en = 1'b1;
+          alu_pq_ct_sub_op_en = 1'b0;
+          alu_pq_mul_op_en = 1'b1;
+          alu_pq_add_op_en = 1'b1;
         end      
 
         InsnOpcodePqBaseMisc: begin
@@ -602,6 +634,11 @@ module otbn_predecode
 
   assign mac_predec_bignum_o.op_en     = mac_bignum_op_en;
   assign mac_predec_bignum_o.acc_rd_en = mac_bignum_acc_rd_en;
+
+  assign alu_predec_pq_o.gs_sub_op_en = alu_pq_gs_sub_op_en;
+  assign alu_predec_pq_o.ct_sub_op_en = alu_pq_ct_sub_op_en;
+  assign alu_predec_pq_o.mul_op_en = alu_pq_mul_op_en;
+  assign alu_predec_pq_o.add_op_en = alu_pq_add_op_en;
 
   assign insn_rs1 = imem_rdata_i[19:15];
   assign insn_rs2 = imem_rdata_i[24:20];

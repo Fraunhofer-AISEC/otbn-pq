@@ -268,4 +268,19 @@ package otbn_pq_pkg;
     
   } insn_dec_pq_t;
 
+
+  typedef struct packed {
+    logic gs_sub_op_en;
+    logic ct_sub_op_en;
+    logic mul_op_en;
+    logic add_op_en;
+  } alu_predec_pq_t;
+
+  typedef struct packed {
+    logic twiddle_en;
+    logic omega_en;
+    logic prime_en;
+    logic prime_dash_en;
+  } trcu_predec_pq_t;
+
 endpackage

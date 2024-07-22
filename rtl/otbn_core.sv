@@ -122,6 +122,7 @@ module otbn_core
   logic [ImemAddrWidth-1:0] ctrl_flow_target_predec;
   ispr_predec_bignum_t      ispr_predec_bignum;
   mac_predec_bignum_t       mac_predec_bignum;
+  alu_predec_pq_t           alu_predec_pq;
   logic                     lsu_addr_en_predec;
 
   logic [NWdr-1:0] rf_bignum_rd_a_indirect_onehot;
@@ -451,6 +452,7 @@ module otbn_core
     .ctrl_flow_target_predec_o(ctrl_flow_target_predec),
     .ispr_predec_bignum_o     (ispr_predec_bignum),
     .mac_predec_bignum_o      (mac_predec_bignum),
+    .alu_predec_pq_o          (alu_predec_pq),
     .lsu_addr_en_predec_o     (lsu_addr_en_predec),
 
     .rf_bignum_rd_a_indirect_onehot_i(rf_bignum_rd_a_indirect_onehot),
@@ -1096,6 +1098,7 @@ module otbn_core
   );
   otbn_pq_alu  u_otbn_alu_pqc(
     .operation_i        (alu_pq_operation),
+    .alu_predec_pq_i    (alu_predec_pq),
     .rs0_o              (alu_pq_result_rs0),
     .rs1_o              (alu_pq_result_rs1),
     .rd_o               (alu_pq_result_rd)

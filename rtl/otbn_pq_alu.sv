@@ -7,6 +7,7 @@ module otbn_pq_alu
   import otbn_pq_pkg::*;
 (
     input  alu_pq_operation_t               operation_i,
+    input  alu_predec_pq_t                  alu_predec_pq_i,
     output logic              [PQLEN*8-1:0] rs0_o,
     output logic              [PQLEN*8-1:0] rs1_o,
     output logic              [PQLEN*8-1:0] rd_o
@@ -20,7 +21,6 @@ module otbn_pq_alu
   logic [PQLEN-1:0] foward_operandb_mux;
   logic [PQLEN-1:0] scale_mux;
   logic [PQLEN-1:0] mul_2_mux;
-  logic [PQLEN-1:0] imm_rs1_mux;
   logic [PQLEN-1:0] ct_bf_add;
   logic [PQLEN-1:0] ct_bf_sub;
   logic [PQLEN-1:0] ct_bf_mux0;
@@ -38,7 +38,7 @@ module otbn_pq_alu
   logic [PQLEN-1:0] alu_op_a;
   logic [PQLEN-1:0] alu_op_b;
   logic [PQLEN-1:0] alu_op_imm;
-  
+
   logic [PQLEN-1:0] rs0;
   logic [PQLEN-1:0] rs1;
   logic [PQLEN-1:0] rd;
@@ -161,13 +161,31 @@ module otbn_pq_alu
   assign sel_rd            = operation_i.op[0];
   
   assign sel_imm            = operation_i.imm_sel;
-  
-  
+
+
+  // Blanking for Subtractor
+  logic [PQLEN-1:0] gs_sub_op_a_blanked;
+  logic [PQLEN-1:0] gs_sub_op_b_blanked;
+
+  // SEC_CM: DATA_REG_SW.SCA
+  prim_blanker #(.Width(PQLEN)) u_gs_sub_operand_a_blanker (
+    .in_i (alu_op_a),
+    .en_i (alu_predec_pq_i.gs_sub_op_en),
+    .out_o(gs_sub_op_a_blanked)
+  );
+
+  // SEC_CM: DATA_REG_SW.SCA
+  prim_blanker #(.Width(PQLEN)) u_gs_sub_operand_b_blanker (
+    .in_i (alu_op_b),
+    .en_i (alu_predec_pq_i.gs_sub_op_en),
+    .out_o(gs_sub_op_b_blanked)
+  );
+
   otbn_subtractor #(
       .DATA_WIDTH(PQLEN)
   ) U_GS_SUBTRACTOR (
-      .op0_i(alu_op_a),
-      .op1_i(alu_op_b),
+      .op0_i(gs_sub_op_a_blanked),
+      .op1_i(gs_sub_op_b_blanked),
       .q_i  (operation_i.prime),
       .res_o(gs_bf_sub)
   );
@@ -181,50 +199,100 @@ module otbn_pq_alu
   // MUL_OP_MUX
   assign mul_op_mux = (sel_twiddle == 1'b1) ? operation_i.twiddle : alu_op_a;
 
+  // Blanking for Multiplier
+  logic [PQLEN-1:0] mul_op_a_blanked;
+  logic [PQLEN-1:0] mul_op_b_blanked;
+
+  // SEC_CM: DATA_REG_SW.SCA
+  prim_blanker #(.Width(PQLEN)) u_mul_operand_a_blanker (
+    .in_i (gs_bf_mux),
+    .en_i (alu_predec_pq_i.mul_op_en),
+    .out_o(mul_op_a_blanked)
+  );
+
+  // SEC_CM: DATA_REG_SW.SCA
+  prim_blanker #(.Width(PQLEN)) u_mul_operand_b_blanker (
+    .in_i (mul_op_mux),
+    .en_i (alu_predec_pq_i.mul_op_en),
+    .out_o(mul_op_b_blanked)
+  );
 
   otbn_multiplier #(
       .DATA_WIDTH(PQLEN),
       .LOG_R(LOG_R)
   ) U_MULTIPLIER (
-      .op0_i(gs_bf_mux),
-      .op1_i(mul_op_mux),
+      .op0_i(mul_op_a_blanked),
+      .op1_i(mul_op_b_blanked),
       .q_i(operation_i.prime),
       .q_dash_i(operation_i.prime_dash),
       .res_o(mul_2_mux)
   );
-
-  assign imm_rs1_mux = (sel_imm == 1'b1) ? alu_op_imm : alu_op_b;
   
-  assign foward_operandb_mux = (sel_forward_rs1 == 1'b1) ? imm_rs1_mux : mul_2_mux;
+  assign foward_operandb_mux = (sel_forward_rs1 == 1'b1) ? scale_mux : mul_2_mux;
 
   assign mul_2_sub_mux  = (sel_forward_rs0 == 1'b1) ? alu_op_a : mul_2_mux;
+
+  // Blanking for Adder
+  logic [PQLEN-1:0] ct_add_op_a_blanked;
+  logic [PQLEN-1:0] ct_add_op_b_blanked;
+
+  // SEC_CM: DATA_REG_SW.SCA
+  prim_blanker #(.Width(PQLEN)) u_add_operand_a_blanker (
+    .in_i (alu_op_a),
+    .en_i (alu_predec_pq_i.add_op_en),
+    .out_o(ct_add_op_a_blanked)
+  );
+
+  // SEC_CM: DATA_REG_SW.SCA
+  prim_blanker #(.Width(PQLEN)) u_add_operand_b_blanker (
+    .in_i (foward_operandb_mux),
+    .en_i (alu_predec_pq_i.add_op_en),
+    .out_o(ct_add_op_b_blanked)
+  );
 
   otbn_adder #(
       .DATA_WIDTH(PQLEN)
   ) U_CT_ADDER (
-      .op0_i(alu_op_a),
-      .op1_i(foward_operandb_mux),
+      .op0_i(ct_add_op_a_blanked),
+      .op1_i(ct_add_op_b_blanked),
       .q_i  (operation_i.prime),
       .res_o(ct_bf_add)
+  );
+
+
+  // Blanking for Subtractor
+  logic [PQLEN-1:0] ct_sub_op_a_blanked;
+  logic [PQLEN-1:0] ct_sub_op_b_blanked;
+
+  // SEC_CM: DATA_REG_SW.SCA
+  prim_blanker #(.Width(PQLEN)) u_ct_sub_operand_a_blanker (
+    .in_i (mul_2_sub_mux),
+    .en_i (alu_predec_pq_i.ct_sub_op_en),
+    .out_o(ct_sub_op_a_blanked)
+  );
+
+  // SEC_CM: DATA_REG_SW.SCA
+  prim_blanker #(.Width(PQLEN)) u_ct_sub_operand_b_blanker (
+    .in_i (foward_operandb_mux),
+    .en_i (alu_predec_pq_i.ct_sub_op_en),
+    .out_o(ct_sub_op_b_blanked)
   );
 
   otbn_subtractor #(
       .DATA_WIDTH(PQLEN)
   ) U_CT_SUBTRACTOR (
-      .op0_i(mul_2_sub_mux),
-      .op1_i(foward_operandb_mux),
+      .op0_i(ct_sub_op_a_blanked),
+      .op1_i(ct_sub_op_b_blanked),
       .q_i  (operation_i.prime),
       .res_o(ct_bf_sub)
   );
 
-  assign ct_bf_mux0 = (sel_ct_mux0 == 1'b1) ? ct_bf_add : alu_op_a;
-
   assign ct_bf_mux1 = (sel_ct_mux1 == 1'b1) ? ct_bf_sub : mul_2_sub_mux;
 
-  assign rs0 = ct_bf_mux0;
+  assign rs0 = ct_bf_add;
 
   assign rs1 = ct_bf_mux1;
 
-  assign rd = (sel_rd == 1'b1) ? ct_bf_mux1 : ct_bf_mux0;
+  assign rd = (sel_rd == 1'b1) ? ct_bf_mux1 : ct_bf_add;
 
 endmodule : otbn_pq_alu

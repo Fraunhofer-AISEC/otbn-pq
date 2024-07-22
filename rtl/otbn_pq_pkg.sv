@@ -282,4 +282,11 @@ package otbn_pq_pkg;
     logic mul_twiddle_op_en;
   } trcu_predec_pq_t;
 
+  typedef struct packed {
+    logic op_en;
+  } keccak_lane_predec_pq_t;
+
+  typedef struct packed {
+    logic op_en;
+  } keccak_plane_predec_pq_t;
 endpackage

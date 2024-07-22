@@ -37,7 +37,7 @@ module otbn_pq_alu
 
   logic [PQLEN-1:0] alu_op_a;
   logic [PQLEN-1:0] alu_op_b;
-  logic [PQLEN-1:0] alu_op_imm;
+
 
   logic [PQLEN-1:0] rs0;
   logic [PQLEN-1:0] rs1;
@@ -47,7 +47,6 @@ module otbn_pq_alu
   always_comb begin
     alu_op_a = '0;
     alu_op_b = '0;
-    alu_op_imm = operation_i.imm;
     
     unique case (operation_i.operand_a_w_sel)
       3'd0: begin

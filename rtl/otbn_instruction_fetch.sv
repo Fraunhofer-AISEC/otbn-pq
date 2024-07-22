@@ -46,6 +46,8 @@ module otbn_instruction_fetch
   output mac_predec_bignum_t       mac_predec_bignum_o,
   output alu_predec_pq_t           alu_predec_pq_o,
   output trcu_predec_pq_t          trcu_predec_pq_o,
+  output keccak_lane_predec_pq_t   keccak_lane_predec_pq_o,
+  output keccak_plane_predec_pq_t  keccak_plane_predec_pq_o,
   output logic                     lsu_addr_en_predec_o,
 
   input logic [NWdr-1:0] rf_bignum_rd_a_indirect_onehot_i,
@@ -106,7 +108,8 @@ module otbn_instruction_fetch
   mac_predec_bignum_t  mac_predec_bignum, mac_predec_bignum_q, mac_predec_bignum_d;
   alu_predec_pq_t      alu_predec_pq, alu_predec_pq_q, alu_predec_pq_d;
   trcu_predec_pq_t     trcu_predec_pq, trcu_predec_pq_q, trcu_predec_pq_d;
-
+  keccak_lane_predec_pq_t keccak_lane_predec_pq, keccak_lane_predec_pq_q, keccak_lane_predec_pq_d;
+  keccak_plane_predec_pq_t keccak_plane_predec_pq, keccak_plane_predec_pq_q, keccak_plane_predec_pq_d;
   logic                lsu_addr_en_predec_q, lsu_addr_en_predec_d;
   logic                lsu_addr_en_predec_insn;
   logic                insn_addr_err_unbuf;
@@ -160,6 +163,8 @@ module otbn_instruction_fetch
     .mac_predec_bignum_o       (mac_predec_bignum),
     .alu_predec_pq_o           (alu_predec_pq),
     .trcu_predec_pq_o          (trcu_predec_pq),
+    .keccak_lane_predec_pq_o   (keccak_lane_predec_pq),
+    .keccak_plane_predec_pq_o  (keccak_plane_predec_pq),
     .lsu_addr_en_predec_o      (lsu_addr_en_predec_insn)
   );
 
@@ -251,6 +256,10 @@ module otbn_instruction_fetch
 
   assign trcu_predec_pq_d = insn_fetch_en ? trcu_predec_pq : trcu_predec_pq_q;
 
+  assign keccak_lane_predec_pq_d = insn_fetch_en ? keccak_lane_predec_pq : keccak_lane_predec_pq_q;
+
+  assign keccak_plane_predec_pq_d = insn_fetch_en ? keccak_plane_predec_pq : keccak_plane_predec_pq_q;
+
   assign ctrl_flow_predec_d = insn_fetch_en           ? ctrl_flow_predec   :
                               insn_fetch_resp_clear_i ? '0                 :
                                                         ctrl_flow_predec_q;
@@ -301,6 +310,28 @@ module otbn_instruction_fetch
 
     .d_i(trcu_predec_pq_d),
     .q_o(trcu_predec_pq_q)
+  );
+
+  prim_flop #(
+    .Width($bits(keccak_lane_predec_pq_t)),
+    .ResetValue('0)
+  ) u_keccak_lane_predec_pq_flop(
+    .clk_i,
+    .rst_ni,
+
+    .d_i(keccak_lane_predec_pq_d),
+    .q_o(keccak_lane_predec_pq_q)
+  );
+
+  prim_flop #(
+    .Width($bits(keccak_plane_predec_pq_t)),
+    .ResetValue('0)
+  ) u_keccak_plane_predec_pq_flop(
+    .clk_i,
+    .rst_ni,
+
+    .d_i(keccak_plane_predec_pq_d),
+    .q_o(keccak_plane_predec_pq_q)
   );
 
   prim_flop #(
@@ -456,6 +487,8 @@ module otbn_instruction_fetch
   assign mac_predec_bignum_o       = mac_predec_bignum_q;
   assign alu_predec_pq_o           = alu_predec_pq_q;
   assign trcu_predec_pq_o          = trcu_predec_pq_q;
+  assign keccak_lane_predec_pq_o   = keccak_lane_predec_pq_q;
+  assign keccak_plane_predec_pq_o  = keccak_plane_predec_pq_q;
   assign lsu_addr_en_predec_o      = lsu_addr_en_predec_q;
 
   `ASSERT(FetchEnOnlyIfValidIMem, insn_fetch_en |-> imem_rvalid_i)

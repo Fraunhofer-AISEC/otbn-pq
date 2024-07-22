@@ -25,6 +25,8 @@ module otbn_predecode
   output mac_predec_bignum_t       mac_predec_bignum_o,
   output alu_predec_pq_t           alu_predec_pq_o,
   output trcu_predec_pq_t          trcu_predec_pq_o,
+  output keccak_lane_predec_pq_t   keccak_lane_predec_pq_o,
+  output keccak_plane_predec_pq_t  keccak_plane_predec_pq_o,
   output logic                     lsu_addr_en_predec_o,
   output ctrl_flow_predec_t        ctrl_flow_predec_o,
   output logic [ImemAddrWidth-1:0] ctrl_flow_target_predec_o
@@ -86,6 +88,9 @@ module otbn_predecode
   logic trcu_sub_op_en;
   logic trcu_mul_omega_op_en;
   logic trcu_mul_twiddle_op_en;
+
+  logic keccak_lane_op_en;
+  logic keccak_plane_op_en;
 
   logic ispr_rd_en;
   logic ispr_wr_en;
@@ -189,6 +194,9 @@ module otbn_predecode
     trcu_sub_op_en = 1'b0;
     trcu_mul_omega_op_en = 1'b0;
     trcu_mul_twiddle_op_en = 1'b0;
+
+    keccak_lane_op_en = 1'b0;  
+    keccak_plane_op_en = 1'b0;  
 
     ispr_rd_en = 1'b0;
     ispr_wr_en = 1'b0;
@@ -586,13 +594,15 @@ module otbn_predecode
         InsnOpcodePqLaneXOR: begin
           rf_we_a_bignum  = 1'b1;
           rf_ren_a_bignum = 1'b1;
-          rf_ren_b_bignum = 1'b1;        
+          rf_ren_b_bignum = 1'b1;
+          keccak_lane_op_en = 1'b1;  
         end
 
         InsnOpcodePqLaneIota: begin
           rf_we_a_bignum  = 1'b1;
           rf_ren_a_bignum = 1'b1;     
           rf_ren_b_bignum = 1'b1; 
+          keccak_lane_op_en = 1'b1;  
         end
 
         InsnOpcodePqPlane: begin        
@@ -601,6 +611,7 @@ module otbn_predecode
           rf_ren_a_bignum = 1'b1;
           rf_ren_b_bignum = 1'b1;  
           pq_alu_inplace  = 1'b1;
+          keccak_plane_op_en = 1'b1;  
         end
 
         default: ;
@@ -666,6 +677,9 @@ module otbn_predecode
   assign trcu_predec_pq_o.sub_op_en = trcu_sub_op_en;
   assign trcu_predec_pq_o.mul_omega_op_en = trcu_mul_omega_op_en;
   assign trcu_predec_pq_o.mul_twiddle_op_en = trcu_mul_twiddle_op_en;
+
+  assign keccak_lane_predec_pq_o.op_en = keccak_lane_op_en;
+  assign keccak_plane_predec_pq_o.op_en = keccak_plane_op_en;
 
   assign insn_rs1 = imem_rdata_i[19:15];
   assign insn_rs2 = imem_rdata_i[24:20];

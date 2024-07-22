@@ -7,6 +7,7 @@ module otbn_keccak_lane_unit
   import otbn_pq_pkg::*;
   (
     input keccak_lane_operation_t operation_i,
+    input keccak_lane_predec_pq_t keccak_lane_predec_pq_i,
     output logic[255:0] rd_o
   );
   
@@ -77,9 +78,28 @@ module otbn_keccak_lane_unit
   
   // Select operand for XOR operation
   assign xor_operand = (operation_i.op[1]) ? operation_i.rc : operand_b; 
-  
+
+
+  // Blanking for Subtractor
+  logic [63:0] xor_op_a_blanked;
+  logic [63:0] xor_op_b_blanked;
+
+  // SEC_CM: DATA_REG_SW.SCA
+  prim_blanker #(.Width(64)) u_xor_operand_a_blanker (
+    .in_i (operand_a),
+    .en_i (keccak_lane_predec_pq_i.op_en),
+    .out_o(xor_op_a_blanked)
+  );
+
+  // SEC_CM: DATA_REG_SW.SCA
+  prim_blanker #(.Width(64)) u_xor_operand_b_blanker (
+    .in_i (xor_operand),
+    .en_i (keccak_lane_predec_pq_i.op_en),
+    .out_o(xor_op_b_blanked)
+  );
+
   // Execution of XOR operation
-  assign lane_xor = operand_a ^ xor_operand;
+  assign lane_xor = xor_op_a_blanked ^ xor_op_b_blanked;
   
   
   // RHO offset table for SHA3 

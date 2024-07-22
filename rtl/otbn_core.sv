@@ -290,11 +290,13 @@ module otbn_core
   
   keccak_lane_operation_t  keccak_lane_operation;
   logic   [PQLEN*8-1:0]    keccak_lane_result_rd;
-  
+  keccak_lane_predec_pq_t keccak_lane_predec_pq;
+
   keccak_plane_operation_t keccak_plane_operation;
   logic   [PQLEN*8-1:0]    keccak_plane_result_rs0;
   logic   [PQLEN*8-1:0]    keccak_plane_result_rs1;
-    
+  keccak_lane_predec_pq_t  keccak_plane_predec_pq;
+
   logic   [PQLEN-1:0]         twiddle;
   logic   [PQLEN-1:0]         prime;
   logic   [PQLEN-1:0]         prime_dash;
@@ -455,6 +457,8 @@ module otbn_core
     .mac_predec_bignum_o      (mac_predec_bignum),
     .alu_predec_pq_o          (alu_predec_pq),
     .trcu_predec_pq_o         (trcu_predec_pq),
+    .keccak_lane_predec_pq_o  (keccak_lane_predec_pq),
+    .keccak_plane_predec_pq_o (keccak_plane_predec_pq),
     .lsu_addr_en_predec_o     (lsu_addr_en_predec),
 
     .rf_bignum_rd_a_indirect_onehot_i(rf_bignum_rd_a_indirect_onehot),
@@ -1114,7 +1118,7 @@ module otbn_core
   otbn_twiddle_update    u_otbn_twiddle_update_unit(
     .clk_i,
     .rst_ni,
-    
+
     .trcu_predec_pq_i     (trcu_predec_pq),
 
     .update_omega_i       (update_omega),
@@ -1177,11 +1181,13 @@ module otbn_core
 
   otbn_keccak_lane_unit u_otbn_keccak_lane_unit(
     .operation_i   (keccak_lane_operation),
+    .keccak_lane_predec_pq_i(keccak_lane_predec_pq),
     .rd_o          (keccak_lane_result_rd)
     );
 
   otbn_keccak_plane_unit u_otbn_keccak_plane_unit(
     .operation_i   (keccak_plane_operation),
+    .keccak_plane_predec_pq_i(keccak_plane_predec_pq),
     .rs0_o         (keccak_plane_result_rs0),
     .rs1_o         (keccak_plane_result_rs1)
     );

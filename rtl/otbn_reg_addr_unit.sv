@@ -53,8 +53,8 @@ module otbn_reg_addr_unit
     logic   [ExtPQLEN-1:0]       m_intg_q;
     logic               m_wr_en;
 
-    logic               mode_d;
-    logic               mode_q;
+    logic [ExtPQLEN-1:0]         mode_intg_d;
+    logic [ExtPQLEN-1:0]         mode_intg_q;
     logic               mode_wr_en;
 
     logic   [ExtPQLEN-1:0]       x_intg_d;
@@ -127,6 +127,11 @@ module otbn_reg_addr_unit
   logic [ExtPQLEN-1:0]             y_intg_calc;
   logic [1:0]                      y_intg_err;
 
+  logic [PQLEN-1:0]                mode_no_intg_d;
+  logic [PQLEN-1:0]                mode_no_intg_q;
+  logic [ExtPQLEN-1:0]             mode_intg_calc;
+  logic [1:0]                      mode_intg_err;
+
     //assign unused_base_data = ispr_base_wdata_i[31:8];
     assign ispr_base_wr_en = |ispr_base_wr_en_i;
         
@@ -136,8 +141,8 @@ module otbn_reg_addr_unit
     assign j2_sll = {j2_no_intg_q[6:0], 1'b0};
     assign j2_srl = {1'b0, j2_no_intg_q[7:1]};
     
-    assign m_sl = mode_q ? m_sll : m_srl;
-    assign j2_sl = mode_q ? j2_srl : j2_sll;
+    assign m_sl = mode_no_intg_q[0] ? m_sll : m_srl;
+    assign j2_sl = mode_no_intg_q[0] ? j2_srl : j2_sll;
     
     assign j_inc = j_no_intg_q + 1;
     
@@ -392,22 +397,35 @@ module otbn_reg_addr_unit
 
 
     // Mode Register
+    prim_secded_inv_39_32_enc i_secded_enc_mode (
+      .data_i (mode_no_intg_d),
+      .data_o (mode_intg_calc)
+    );
+    prim_secded_inv_39_32_dec i_secded_dec_mode (
+      .data_i     (mode_intg_q),
+      .data_o     (/* unused because we abort on any integrity error */),
+      .syndrome_o (/* unused */),
+      .err_o      (mode_intg_err)
+    );
+    assign mode_no_intg_q = mode_intg_q[PQLEN-1:0];    
+
     always_ff @(posedge clk_i or negedge rst_ni) begin
-        if (!rst_ni) begin
-            mode_q <= '0;
-        end else if (mode_wr_en) begin
-            mode_q <= mode_d;
+        if (mode_wr_en) begin
+            mode_intg_q <= mode_intg_d;
         end
     end
 
     always_comb begin
-    mode_d= ispr_base_wdata_i[0];
+      mode_no_intg_d = '0;
 
-    unique case (1'b1)
-        ispr_init_i:               mode_d = '0;
-        ispr_base_wr_en:           mode_d = ispr_base_wdata_i[0];
-    default: ;
-        endcase
+      unique case (1'b1)
+          ispr_init_i: mode_intg_d = EccZeroWord; 
+          ispr_base_wr_en_i[0]: begin
+            mode_no_intg_d = {30'b0, ispr_base_wdata_i[0]};
+            mode_intg_d = mode_intg_calc;
+          end
+        default: ;
+      endcase
     end
     
     //TODO Enable ASSERTs
@@ -522,7 +540,7 @@ module otbn_reg_addr_unit
           IsprJ:           ispr_rdata_o = {24'b0, j_no_intg_q[7:0]};
           IsprIdx0:        ispr_rdata_o = {24'b0, idx0_no_intg_q[7:0]};
           IsprIdx1:        ispr_rdata_o = {24'b0, idx1_no_intg_q[7:0]};
-          IsprMode:        ispr_rdata_o = {31'b0, mode_q};
+          IsprMode:        ispr_rdata_o = {31'b0, mode_no_intg_q[0]};
           IsprX:           ispr_rdata_o = {29'b0, x_no_intg_q[2:0]};
           IsprY:           ispr_rdata_o = {29'b0, y_no_intg_q[2:0]};
         default: ;

@@ -185,7 +185,7 @@ module otbn_reg_addr_unit
     );
     assign m_no_intg_q = m_intg_q[PQLEN-1:0];    
 
-    always_ff @(posedge clk_i or negedge rst_ni) begin
+    always_ff @(posedge clk_i) begin
         if (m_wr_en) begin
             m_intg_q <= m_intg_d;
         end
@@ -228,7 +228,7 @@ module otbn_reg_addr_unit
     );
     assign j2_no_intg_q = j2_intg_q[PQLEN-1:0];    
 
-    always_ff @(posedge clk_i or negedge rst_ni) begin
+    always_ff @(posedge clk_i) begin
         if (j2_wr_en) begin
             j2_intg_q <= j2_intg_d;
         end
@@ -271,7 +271,7 @@ module otbn_reg_addr_unit
     );
     assign j_no_intg_q = j_intg_q[PQLEN-1:0];    
 
-    always_ff @(posedge clk_i or negedge rst_ni) begin
+    always_ff @(posedge clk_i) begin
         if (j_wr_en) begin
             j_intg_q <= j_intg_d;
         end
@@ -314,7 +314,7 @@ module otbn_reg_addr_unit
     );
     assign idx0_no_intg_q = idx0_intg_q[PQLEN-1:0];    
 
-    always_ff @(posedge clk_i or negedge rst_ni) begin
+    always_ff @(posedge clk_i) begin
         if (idx0_wr_en) begin
             idx0_intg_q <= idx0_intg_d;
         end
@@ -361,7 +361,7 @@ module otbn_reg_addr_unit
     );
     assign idx1_no_intg_q = idx1_intg_q[PQLEN-1:0];    
 
-    always_ff @(posedge clk_i or negedge rst_ni) begin
+    always_ff @(posedge clk_i) begin
         if (idx1_wr_en) begin
             idx1_intg_q <= idx1_intg_d;
         end
@@ -409,7 +409,7 @@ module otbn_reg_addr_unit
     );
     assign mode_no_intg_q = mode_intg_q[PQLEN-1:0];    
 
-    always_ff @(posedge clk_i or negedge rst_ni) begin
+    always_ff @(posedge clk_i) begin
         if (mode_wr_en) begin
             mode_intg_q <= mode_intg_d;
         end
@@ -454,7 +454,7 @@ module otbn_reg_addr_unit
     );
     assign x_no_intg_q = x_intg_q[PQLEN-1:0];    
 
-    always_ff @(posedge clk_i or negedge rst_ni) begin
+    always_ff @(posedge clk_i) begin
         if (x_wr_en) begin
             x_intg_q <= x_intg_d;
         end
@@ -499,7 +499,7 @@ module otbn_reg_addr_unit
     );
     assign y_no_intg_q = y_intg_q[PQLEN-1:0];    
 
-    always_ff @(posedge clk_i or negedge rst_ni) begin
+    always_ff @(posedge clk_i) begin
         if (y_wr_en) begin
             y_intg_q <= y_intg_d;
         end

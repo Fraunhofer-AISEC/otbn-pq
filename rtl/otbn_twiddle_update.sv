@@ -68,8 +68,8 @@ module otbn_twiddle_update
     logic [ExtWLEN-1:0]             psi_intg_d;
     logic [BaseWordsPerPQLEN-1:0]   psi_wr_en;
     
-    logic [2:0]                     psi_idx_intg_q;
-    logic [2:0]                     psi_idx_intg_d;
+    logic [ExtPQLEN:0]                     psi_idx_intg_q;
+    logic [ExtPQLEN:0]                     psi_idx_intg_d;
     logic [2:0]                     psi_idx_inc;
     logic                           psi_idx_wr_en;
     logic [7:0]                     psi_onehot;
@@ -93,8 +93,8 @@ module otbn_twiddle_update
     logic [ExtWLEN-1:0]             rc_intg_d;
     logic [BaseWordsPerPQLEN-1:0]   rc_wr_en;
     
-    logic [1:0]                     rc_idx_intg_q;
-    logic [1:0]                     rc_idx_intg_d;
+    logic [ExtPQLEN-1:0]                     rc_idx_intg_q;
+    logic [ExtPQLEN-1:0]                     rc_idx_intg_d;
     logic [1:0]                     rc_idx_inc;
     logic                           rc_idx_wr_en;
     
@@ -332,7 +332,7 @@ module otbn_twiddle_update
     );
     assign prime_no_intg_q = prime_intg_q[PQLEN-1:0];    
 
-    always_ff @(posedge clk_i or negedge rst_ni) begin
+    always_ff @(posedge clk_i) begin
         if (prime_wr_en) begin
             prime_intg_q <= prime_intg_d;
         end
@@ -375,7 +375,7 @@ module otbn_twiddle_update
     );
     assign prime_dash_no_intg_q = prime_dash_intg_q[PQLEN-1:0];    
 
-    always_ff @(posedge clk_i or negedge rst_ni) begin
+    always_ff @(posedge clk_i) begin
         if (prime_dash_wr_en) begin
             prime_dash_intg_q <= prime_dash_intg_d;
         end
@@ -418,7 +418,7 @@ module otbn_twiddle_update
     );
     assign twiddle_no_intg_q = twiddle_intg_q[PQLEN-1:0];    
 
-    always_ff @(posedge clk_i or negedge rst_ni) begin
+    always_ff @(posedge clk_i) begin
         if (twiddle_wr_en) begin
             twiddle_intg_q <= twiddle_intg_d;
         end
@@ -498,7 +498,7 @@ module otbn_twiddle_update
               omega_intg_d[i_word*39+:39]  = omega_intg_calc[i_word*39+:39] ;            
             end
             update_omega_i : begin
-              omega_no_intg_d[i_word*32+:32] = omega_mul[i_word*32+:32];
+              omega_no_intg_d[i_word*32+:32] = omega_mul;
               omega_intg_d[i_word*39+:39]  = omega_intg_calc[i_word*39+:39] ;    
             end
           default: ;
@@ -549,7 +549,7 @@ module otbn_twiddle_update
               psi_intg_d[i_word*39+:39]  = psi_intg_calc[i_word*39+:39] ;            
             end
             update_psi_i : begin
-              psi_no_intg_d[i_word*32+:32] = omega[i_word*32+:32];
+              psi_no_intg_d[i_word*32+:32] = omega;
               psi_intg_d[i_word*39+:39]  = psi_intg_calc[i_word*39+:39] ;    
             end
           default: ;
@@ -577,7 +577,7 @@ module otbn_twiddle_update
     );
     assign omega_idx_no_intg_q = omega_idx_intg_q[PQLEN-1:0];    
 
-    always_ff @(posedge clk_i or negedge rst_ni) begin
+    always_ff @(posedge clk_i) begin
         if (omega_idx_wr_en) begin
             omega_idx_intg_q <= omega_idx_intg_d;
         end
@@ -627,7 +627,7 @@ module otbn_twiddle_update
     );
     assign psi_idx_no_intg_q = psi_idx_intg_q[PQLEN-1:0];    
 
-    always_ff @(posedge clk_i or negedge rst_ni) begin
+    always_ff @(posedge clk_i) begin
         if (psi_idx_wr_en) begin
             psi_idx_intg_q <= psi_idx_intg_d;
         end
@@ -677,7 +677,7 @@ module otbn_twiddle_update
     );
     assign const_no_intg_q = const_intg_q[PQLEN-1:0];    
 
-    always_ff @(posedge clk_i or negedge rst_ni) begin
+    always_ff @(posedge clk_i) begin
         if (const_wr_en) begin
             const_intg_q <= const_intg_d;
         end
@@ -764,7 +764,7 @@ module otbn_twiddle_update
     );
     assign rc_idx_no_intg_q = rc_idx_intg_q[PQLEN-1:0];    
 
-    always_ff @(posedge clk_i or negedge rst_ni) begin
+    always_ff @(posedge clk_i) begin
         if (rc_idx_wr_en) begin
             rc_idx_intg_q <= rc_idx_intg_d;
         end

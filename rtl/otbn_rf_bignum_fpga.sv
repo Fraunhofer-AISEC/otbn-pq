@@ -24,9 +24,12 @@ module otbn_rf_bignum_fpga
   input  logic             clk_i,
   input  logic             rst_ni,
 
-  input  logic [WdrAw-1:0]   wr_addr_i,
-  input  logic [1:0]         wr_en_i,
-  input  logic [ExtWLEN-1:0] wr_data_i,
+  input  logic [WdrAw-1:0]   wr_addr_a_i,
+  input  logic [WdrAw-1:0]   wr_addr_b_i,
+  input  logic [7:0]         wr_en_a_i,
+  input  logic [7:0]         wr_en_b_i,
+  input  logic [ExtWLEN-1:0] wr_data_a_i,
+  input  logic [ExtWLEN-1:0] wr_data_b_i, 
 
   input  logic [WdrAw-1:0]   rd_addr_a_i,
   output logic [ExtWLEN-1:0] rd_data_a_o,
@@ -60,9 +63,13 @@ module otbn_rf_bignum_fpga
     // Therefore, we use "always" instead of the generally preferred "always_ff" for the synchronous
     // write procedure.
     always @(posedge clk_i) begin
-      if (wr_en_i[i/(BaseWordsPerWLEN/2)] == 1'b1) begin
-        rf_local[wr_addr_i] <= wr_data_i[i*BaseIntgWidth+:BaseIntgWidth];
-      end
+      if (wr_en_a_i[i] == 1'b1) begin
+        rf_local[wr_addr_a_i] <= wr_data_a_i[i*BaseIntgWidth+:BaseIntgWidth];
+      end 
+      if (wr_en_b_i[i] == 1'b1) begin
+        rf_local[wr_addr_b_i] <= wr_data_b_i[i*BaseIntgWidth+:BaseIntgWidth];
+      end 
+
     end
 
     // Make sure we initialize the BRAM with the correct register reset value.

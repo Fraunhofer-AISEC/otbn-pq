@@ -99,9 +99,13 @@ module otbn_rf_bignum
       .clk_i,
       .rst_ni,
 
-      .wr_addr_i(wr_addr_a_i),
-      .wr_en_i(wr_en_a_internal),
-      .wr_data_i(wr_data_a_intg_mux_out),
+      .wr_addr_a_i(wr_addr_a_i),
+      .wr_en_a_i(wr_en_a_internal),
+      .wr_data_a_i(wr_data_a_intg_mux_out),
+
+      .wr_addr_b_i(wr_addr_b_i),
+      .wr_en_b_i(wr_en_b_internal),
+      .wr_data_b_i(wr_data_b_intg_mux_out),
 
       .rd_addr_a_i,
       .rd_data_a_o(rd_data_a_intg_o),

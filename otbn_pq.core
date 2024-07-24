@@ -156,6 +156,10 @@ parameters:
     datatype: bool
     default: false
     paramtype: vlogdefine
+  RegFile:
+    datatype: str
+    paramtype: vlogparam
+    default: RegFileFF
 
 
 targets:
@@ -194,7 +198,7 @@ targets:
           - "-Wall"
 
   sim:
-    <<: *synth
+    <<: *default_target
     default_tool: vivado
     filesets_append:
       - files_rtl_tb
@@ -212,6 +216,7 @@ targets:
     parameters:
       - SYNTHESIS=true
       - SYNTHESIS_MEMORY_BLACK_BOXING=true
+      - RegFile=RegFileFF
     tools:
       genus:
         script_dir: "../../../hw/ip/otbn/syn"
@@ -231,6 +236,7 @@ targets:
     parameters:
       - SYNTHESIS=true
       - SYNTHESIS_MEMORY_BLACK_BOXING=false
+      - RegFile=RegFileFPGA
     tools:
       vivado:
         part: "xc7k160tfbg676-1" # CW310 with K410T

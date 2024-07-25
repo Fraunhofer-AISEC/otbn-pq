@@ -78,84 +78,178 @@ pq.pqsrw 7, w0
 
 jal x1, intt
 
+ecall
+
+
+
+
+
 /*************************************************/
 /*  Reduce s2 elements modulo q ([0..q-1] range) */
 /*************************************************/
 
+/* input address */
+li x4, 0
+
+/* output address */
+li x6, 0
+
+jal x1, reduce
 
 /*************************************************/
 /*     Compute -s1 = s2*h - c0 mod phi mod q     */
 /*************************************************/
 
+
+/*************/
+/*    NTT    */
+/*************/
+
+
+/* Load operands and constants into WDRs */
+li x2, 0
+
+/* Load prime into WDR w0*/
+la x14, prime
+bn.lid x2, 0(x14)
+
+/* Load prime into PQSR*/
+pq.pqsrw 0, w0
+
+
+/* Load prime_dash into WDR w0*/
+la x14, prime_dash
+bn.lid x2, 0(x14)
+
+/* Load prime_dash into PQSR*/
+pq.pqsrw 1, w0
+
+
+/* Load DMEM(64) into WDR w0*/
+la x14, omega0
+bn.lid x2, 0(x14)
+
+/* Load omega into PQSR*/
+pq.pqsrw 3, w0
+
+
+/* Load DMEM(96) into WDR w0*/
+la x14, psi0
+bn.lid x2, 0(x14)
+
+/* Load psi into PQSR*/
+pq.pqsrw 4, w0
+
+
+la x20, coef0
+la x19, coef0
+
+jal x1, ntt
+
+
+
+/*************/
+/*    MUL    */
+/*************/
+
+/* input address 1 */
+li x4, 16352
+
+/* input address 2 */
+li x5, 16352
+
+/* output address */
+li x6, 18432
+
+/* Load r_dash into WDR w0*/
+li x2, 0
+la x31, r_dash 
+bn.lid x2, 0(x31)
+
+/* j = 0 */
+li x2, 0
+pq.srw 2, x0
+
+/* Load r_dash into scale PQSR*/
+pq.pqsrw 7, w0
+
+jal x1, pointwise_mul
+
+
+
+
+/*************/
+/*   INTT    */
+/*************/
+
+la x20, inv_coef0
+la x19, inv_coef0
+
+/* Load DMEM(64) into WDR w0*/
+la x14, inv_omega0
+bn.lid x2, 0(x14)
+
+/* Load omega into PQSR*/
+pq.pqsrw 3, w0
+
+/* Load DMEM(96) into WDR w0*/
+la x14, inv_psi0
+bn.lid x2, 0(x14)
+
+/* Load psi into PQSR*/
+pq.pqsrw 4, w0
+
+/* Load n1 into WDR w0*/
+la x14, n1
+bn.lid x2, 0(x14)
+
+/* Load n^-1 into PQSR*/
+pq.pqsrw 7, w0
+
+jal x1, intt
+
+
+/*************/
+/*    SUB    */
+/*************/
+/* la x4, Az_coef_0_0 */
+li x4, 18432
+/* la x5, w_acc_coef_0_0 */
+li x5, 20480
+/* la x6, w_acc_coef_0_0 */
+li x6, 20480 
+  
+li x31, 1
+jal x1, pointwise_sub
+
+
 /*******************************************************/
 /* Normalize -s1 elements into the [-q/2..q/2] range.  */
 /*******************************************************/
+
+li x20, 0
+li x19, 0
+
+loopi 64, 3
+  jal x1, normalize
+  addi x19, x19, 32
+  addi x20, x20, 32
 
 
 /************************************************************************************/
 /* Signature is valid if and only if the aggregate (-s1,s2) vector is short enough. */
 /************************************************************************************/
 
-ecall
+li x20, 0
+li x19, 0
 
+jal x1, is_short
+addi x2, x2, 0
+ecall
 
 /*************************************************/
 /*            Functions and Procedures           */
 /*************************************************/
-
-
-/*************************************************/
-/*               Pointwise Addition                    
-* @param[in] x4: address of first operand in DMEM
-* @param[in] x5: address of second operand in DMEM
-* @param[in] x6: address of result in DMEM
-* @param[out] DMEM[x6:x6+1024]: output of addition
-*
-* clobbered registers: x2: WDR register address operand
-*                      x3: WDR register address operand
-*                      x8: WDR register address result
-*                      w24: WDR result
-*                      w0: WDR operand
-*                      w16: WDR operand
-*
-*
-*
-*
-*
-*
-*
-*
-*
-/*************************************************/
-
-pointwise_add:
-
-li x2, 0
-li x3, 16
-li x8, 24
-
-loopi 64, 11
-
-  bn.lid x2, 0(x4++)
-  bn.lid x3, 0(x5++)
-
-
-  /* Coefficientwise Addition */
-
-  /* Coefficientwise Multiplication */
-  pq.add w24.0, w0.0, w16.0
-  pq.add w24.1, w0.1, w16.1
-  pq.add w24.2, w0.2, w16.2
-  pq.add w24.3, w0.3, w16.3
-  pq.add w24.4, w0.4, w16.4
-  pq.add w24.5, w0.5, w16.5
-  pq.add w24.6, w0.6, w16.6
-  pq.add w24.7, w0.7, w16.7
-
-  /* Store Coefficients */
-  bn.sid x8, 0(x6++)
-
-ret
 
 
 /*************************************************/
@@ -196,7 +290,6 @@ loopi 64, 11
 
   /* Coefficientwise Subtraction */
 
-  /* Coefficientwise Multiplication */
   pq.sub w24.0, w0.0, w16.0
   pq.sub w24.1, w0.1, w16.1
   pq.sub w24.2, w0.2, w16.2
@@ -643,6 +736,312 @@ intt:
 
     li x25, 0
     li x26, 16
+
+ret
+
+
+/*************************************************/
+/*                      REDUCE                     
+* @param[in] x4: address of operands in DMEM
+* @param[in] x6: address of result in DMEM
+* @param[out] DMEM[x6:x6+1024]: output of subtraction
+*
+* clobbered registers: x2: WDR register address operand
+*                      x8: WDR register address result
+*                      w24: WDR result
+*                      w0: WDR operand
+*                      w16: WDR operand all zero
+*
+*
+*
+*
+*
+*
+*
+*
+*
+/*************************************************/
+
+reduce:
+
+li x2, 0
+li x8, 24
+
+/* Generate all zero vector */
+bn.xor w16, w16, w16
+
+loopi 64, 10
+
+  bn.lid x2, 0(x4++)
+
+  /* Coefficientwise Subtraction */
+  pq.sub w24.0, w0.0, w16.0
+  pq.sub w24.1, w0.1, w16.1
+  pq.sub w24.2, w0.2, w16.2
+  pq.sub w24.3, w0.3, w16.3
+  pq.sub w24.4, w0.4, w16.4
+  pq.sub w24.5, w0.5, w16.5
+  pq.sub w24.6, w0.6, w16.6
+  pq.sub w24.7, w0.7, w16.7
+
+  /* Store Coefficients */
+  bn.sid x8, 0(x6++)
+
+ret
+
+
+
+/*************************************************/
+/*                      NORMALIZE                     
+* @param[in]  x20: pointer to input coefficients                  
+* @param[in]  x19: pointer to output coefficients      
+* clobbered registers: x2: m
+*                      x3: j2
+*                      x4: 2
+*                      x23: intermediate address output
+*                      x24: intermediate address input
+*                      x25: wdr source 0
+*                      x26: wdr source 1
+*                      w6: Q/2
+*                      w7: 0x00000000
+*                      w8: 0xffffffff
+*                      w9: load coefficients in there
+*                      w13: w
+*                      x5: mode
+*
+*
+*
+*
+*
+*
+*
+*
+*
+/*************************************************/
+
+normalize:
+
+  /* Generate constants */
+
+  /* Load bitmask in w8 */
+  la x4, bitmask32
+  li x3, 8
+  bn.lid x3, 0(x4) 
+
+  /* Compute allzero vector in w7 */
+  bn.xor w7, w7, w7
+
+  /* Load prime in w9 */
+  la x4, prime
+  li x3, 9
+  bn.lid x3, 0(x4) 
+
+  /* Compute Q/2 and store in w6 */
+  bn.rshi w6, w7, w9 >> 1
+
+  /* Load Coefficients in WDR 9 */
+  li x3, 9
+  bn.lid x3, 0(x20) 
+
+  /* Work in WDR 14 */
+
+  /* Sort coefficients differently to store them easier in one WDR */
+  pq.add w10.7, w9.0, w7.0
+  pq.add w10.6, w9.1, w7.0
+  pq.add w10.5, w9.2, w7.0
+  pq.add w10.4, w9.3, w7.0
+  pq.add w10.3, w9.4, w7.0
+  pq.add w10.2, w9.5, w7.0
+  pq.add w10.1, w9.6, w7.0
+  pq.add w10.0, w9.7, w7.0
+
+
+  loopi 8, 17
+
+    /* Select current coefficient */
+    bn.and w13, w8, w10
+
+    /* w -= (((Q-1)/2 - w) >> 31) & Q */
+    bn.sub w14, w6, w13
+    bn.and w14, w8, w14
+
+    bn.rshi w14, w7, w14 >> 31
+
+    bn.cmp w7, w14, FG0
+    csrrw x14, 1984, x0
+    andi x14, x14, 1
+
+    beq x14, x0, skip_mask2
+    bn.rshi w11, w8, w7 >> 248
+    bn.or w14, w8, w14
+    bn.and w14, w14, w8
+    skip_mask2:
+
+    bn.and w14, w8, w14
+    bn.and w14, w0, w14
+    bn.sub w14, w13, w14
+
+    /* Store w in WDR16 */
+    bn.and w14, w8, w14
+    bn.or w16, w14, w16 << 32
+
+    /* Update WDR10 to process next coefficient */
+    bn.or w10, w7, w10 >> 32
+
+  li x8, 16
+  /* Store Coefficients */
+  bn.sid x8, 0(x19)
+
+ret
+
+
+
+/*************************************************/
+/*                      IS_SHORT                                   
+* @param[in]  x19: pointer to s1 coefficients     
+* @param[in]  x20: pointer to s2 coefficients
+* @param[in]  x21: pointer to store coefficients     
+* clobbered registers: x2: m
+*                      x3: j2
+*                      x4: 2
+*                      x23: intermediate address output
+*                      x24: intermediate address input
+*                      x25: wdr source 0
+*                      x26: wdr source 1
+*                      w6: Q/2
+*                      w7: beta^2
+*                      w8: 0xffffffff
+*                      w9: load coefficients in there
+*                      w13: w
+*                      x5: mode
+*
+*
+*
+*
+*
+*
+*
+*
+*
+/*************************************************/
+is_short:
+
+/* Compute squared norm in w31 and w30 */
+
+/* Initialize w30 as 0x000..0*/
+bn.xor w30, w30, w30
+
+/* Initialize w31 as 0x000..0*/
+bn.xor w31, w31, w31
+
+/* Initialize w24 as 0x000..0*/
+bn.xor w24, w24, w24
+
+/* Load beta squared into w7 */
+la x2, l2bound
+li x3, 7
+bn.lid x3, 0(x2)
+
+li x2, 0
+li x3, 16
+
+loopi 64, 42
+
+  /* load s1 for s1 * s1 */
+  bn.lid x2, 0(x19)
+  bn.lid x3, 0(x19++)
+
+  /* Set idx0/idx1 */
+  pq.pqsru 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 
+
+  loopi 8, 1
+    /* Transformation in Montgomery Domain */
+    pq.scale.ind 0, 0, 0, 0, 1
+
+  /* Square s1 and add to norm */
+  pq.mul w24.0, w0.0, w16.0
+  bn.add w31, w31, w24
+  bn.or w30, w31, w30
+
+  pq.mul w24.0, w0.1, w16.1
+  bn.add w31, w31, w24
+  bn.or w30, w31, w30
+
+  pq.mul w24.0, w0.2, w16.2
+  bn.add w31, w31, w24
+  bn.or w30, w31, w30
+
+  pq.mul w24.0, w0.3, w16.3
+  bn.add w31, w31, w24
+  bn.or w30, w31, w30
+
+  pq.mul w24.0, w0.4, w16.4
+  bn.add w31, w31, w24
+  bn.or w30, w31, w30
+
+  pq.mul w24.0, w0.5, w16.5
+  bn.add w31, w31, w24
+  bn.or w30, w31, w30
+
+  pq.mul w24.0, w0.6, w16.6
+  bn.add w31, w31, w24
+  bn.or w30, w31, w30
+
+  pq.mul w24.0, w0.7, w16.7
+  bn.add w31, w31, w24
+  bn.or w30, w31, w30
+
+  /* load s2 for s2 * s2 */
+  bn.lid x2, 0(x20)
+  bn.lid x3, 0(x20++)
+
+  /* Set idx0/idx1 */
+  pq.pqsru 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 
+
+  loopi 8, 1
+    /* Transformation in Montgomery Domain */
+    pq.scale.ind 0, 0, 0, 0, 1
+
+  /* Square s1 and add to norm */
+  pq.mul w24.0, w0.0, w16.0
+  bn.add w31, w31, w24
+  bn.or w30, w31, w30
+
+  pq.mul w24.0, w0.1, w16.1
+  bn.add w31, w31, w24
+  bn.or w30, w31, w30
+
+  pq.mul w24.0, w0.2, w16.2
+  bn.add w31, w31, w24
+  bn.or w30, w31, w30
+
+  pq.mul w24.0, w0.3, w16.3
+  bn.add w31, w31, w24
+  bn.or w30, w31, w30
+
+  pq.mul w24.0, w0.4, w16.4
+  bn.add w31, w31, w24
+  bn.or w30, w31, w30
+
+  pq.mul w24.0, w0.5, w16.5
+  bn.add w31, w31, w24
+  bn.or w30, w31, w30 
+
+  pq.mul w24.0, w0.6, w16.6
+  bn.add w31, w31, w24
+  bn.or w30, w31, w30
+
+  pq.mul w24.0, w0.7, w16.7
+  bn.add w31, w31, w24
+  bn.or w30, w31, w30
+
+  /* Check if norm exceeds bound */
+  bn.cmp w7, w30, FG0
+  csrrw x14, 1984, x0
+  andi x14, x14, 1
+
+  /* If norm exceeds bound x14 is set to 0 */
+  xori x14, x14, 1
 
 ret
 
@@ -1482,3 +1881,27 @@ inv_coef63:
   .quad 0x00001f54000004c3
   .quad 0x00002552000025ae
   .quad 0x00000fcd0000263a
+
+bitmask32:
+  .word 0xFFFFFFFF
+
+bitmask_extended: 
+  .word 0x00000000
+  .quad 0x0000000000000000
+  .quad 0x0000000000000000
+  .quad 0x0000000000000000
+
+l2bound:
+  .word 0x02075426
+
+l2bound_extended: 
+  .word 0x00000000
+  .quad 0x0000000000000000
+  .quad 0x0000000000000000
+  .quad 0x0000000000000000
+
+r_dash:
+  .quad 0x0000000000001620
+  .quad 0x0000000000000000
+  .quad 0x0000000000000000
+  .quad 0x0000000000000000

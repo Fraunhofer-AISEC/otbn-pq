@@ -20,7 +20,7 @@ package otbn_pq_pkg;
   parameter int LOG_R = 32;
     
   // "Extended" PQLEN: the size of the datapath with added integrity bits
-  parameter int ExtPQLEN = PQLEN * 39 / 32;
+  parameter int ExtPQLEN = 39;
 
 
 

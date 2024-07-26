@@ -871,40 +871,116 @@ la x4, bitmask32
 li x3, 8
 bn.lid x3, 0(x4) 
 
-/* Load beta squared into w7 */
-la x2, l2bound
-li x3, 7
-bn.lid x3, 0(x2)
+/* Initialize w7 as 0x00...0 */
+li x3, 0
+bn.xor w7, w7, w7
 
-li x2, 0
-li x3, 16
+loopi 64, 30
 
-loopi 64, 42
-
-  /* load s1 for s1 * s1 */
-  bn.lid x2, 0(x19)
+  /* load s1 for s1 * s1 into WDR0 */
   bn.lid x3, 0(x19++)
 
   /* Square s1 and add to norm */
-  
-  bn.mulqacc.z 
+
+  /* Select current coefficient */
+  bn.and w0, w8, w0
+
+  /* s += (z * z) */
+  bn.mulqacc.wo.z w24, w0.0, w0.0, 0
+  bn.and w24, w8, w24
+  bn.add w31, w31, w24
+
+  /* ng |= s */
   bn.or w30, w31, w30
 
-  /* load s2 for s2 * s2 */
-  bn.lid x2, 0(x20)
+  /* Update coefficient to process */
+  bn.or w0, w7, w0 >> 32
+
+  loopi 7, 6
+  
+    /* Select current coefficient */
+    bn.and w0, w8, w0
+
+    /* s += (z * z) */
+    bn.mulqacc.wo.z w24, w0.0, w0.0, 0
+    bn.and w24, w8, w24
+    bn.add w31, w31, w24
+
+    /* ng |= s */
+    bn.or w30, w31, w30
+
+    /* Update coefficient to process */
+    bn.or w0, w7, w0 >> 32
+
+  /* load s2 for s2 * s2  into WDR0 */
   bn.lid x3, 0(x20++)
 
-  /* Square s1 and add to norm */
+  /* Square s2 and add to norm */
 
+  /* Select current coefficient */
+  bn.and w0, w8, w0
+
+  /* s += (z * z) */
+  bn.mulqacc.wo.z w24, w0.0, w0.0, 0
+  bn.and w24, w8, w24
+  bn.add w31, w31, w24
+
+  /* ng |= s */
   bn.or w30, w31, w30
 
+  /* Update coefficient to process */
+  bn.or w0, w7, w0 >> 32
+
+  loopi 7, 6
+  
+    /* Select current coefficient */
+    bn.and w0, w8, w0
+
+    /* s += (z * z) */
+    bn.mulqacc.wo.z w24, w0.0, w0.0, 0
+    bn.and w24, w8, w24
+    bn.add w31, w31, w24
+
+    /* ng |= s */
+    bn.or w30, w31, w30
+
+    /* Update coefficient to process */
+    bn.or w0, w7, w0 >> 32
+
+  addi x31, x31, 1
+  addi x31, x31, 2
+  addi x31, x31, 3
+  addi x31, x31, 4
+  addi x31, x31, 5
+  addi x31, x31, 6
+  addi x31, x31, 7
+  addi x31, x31, 8
+  addi x31, x31, 9
+  addi x31, x31, 10
+  addi x31, x31, 11
+  addi x31, x31, 12
+  addi x31, x31, 13
+
+  li x31, 15
+  addi x31, x31, 1
+
   /* Check if norm exceeds bound */
+
+  /* Load beta squared into w7 */
+  la x2, l2bound
+  li x3, 7
+  bn.lid x3, 0(x2)
+
   bn.cmp w7, w30, FG0
   csrrw x14, 1984, x0
   andi x14, x14, 1
 
   /* If norm exceeds bound x14 is set to 0 */
   xori x14, x14, 1
+
+  /* Write back w30 to check if norm was computed correctly */
+  li x2, 30
+  bn.sid x2, 0(x0)
 
 ret
 

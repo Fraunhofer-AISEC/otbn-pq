@@ -97,8 +97,6 @@ pq.pqsrw 7, w0
 jal x1, pointwise_mul
 
 
-/* Correct until this point here */
-
 /*************/
 /*   INTT    */
 /*************/
@@ -158,6 +156,8 @@ loopi 64, 3
   addi x19, x19, 32
   addi x20, x20, 32
 
+
+/* Correct until this point here */
 
 /************************************************************************************/
 /* Signature is valid if and only if the aggregate (-s1,s2) vector is short enough. */
@@ -754,13 +754,13 @@ normalize:
   /* Compute allzero vector in w7 */
   bn.xor w7, w7, w7
 
-  /* Load prime in w9 */
+  /* Load prime in w0 */
   la x4, prime
-  li x3, 9
+  li x3, 0
   bn.lid x3, 0(x4) 
 
   /* Compute Q/2 and store in w6 */
-  bn.rshi w6, w7, w9 >> 1
+  bn.rshi w6, w7, w0 >> 1
 
   /* Load Coefficients in WDR 9 */
   li x3, 9
@@ -785,16 +785,22 @@ normalize:
     bn.and w13, w8, w10
 
     /* w -= (((Q-1)/2 - w) >> 31) & Q */
+
+    /* (Q-1)/2 - w */
     bn.sub w14, w6, w13
     bn.and w14, w8, w14
 
+    /* (((Q-1)/2 - w) >> 31) */
     bn.rshi w14, w7, w14 >> 31
 
+    /* Check Sign */
     bn.cmp w7, w14, FG0
     csrrw x14, 1984, x0
     andi x14, x14, 1
 
+    /* If negative subtract Q from w */
     beq x14, x0, skip_mask2
+    /* ToDo: What does this line do? */
     bn.rshi w11, w8, w7 >> 248
     bn.or w14, w8, w14
     bn.and w14, w14, w8
@@ -860,6 +866,11 @@ bn.xor w31, w31, w31
 /* Initialize w24 as 0x000..0*/
 bn.xor w24, w24, w24
 
+/* Load bitmask in w8 */
+la x4, bitmask32
+li x3, 8
+bn.lid x3, 0(x4) 
+
 /* Load beta squared into w7 */
 la x2, l2bound
 li x3, 7
@@ -874,88 +885,17 @@ loopi 64, 42
   bn.lid x2, 0(x19)
   bn.lid x3, 0(x19++)
 
-  /* Set idx0/idx1 */
-  pq.pqsru 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 
-
-  loopi 8, 1
-    /* Transformation in Montgomery Domain */
-    pq.scale.ind 0, 0, 0, 0, 1
-
   /* Square s1 and add to norm */
-  pq.mul w24.0, w0.0, w16.0
-  bn.add w31, w31, w24
-  bn.or w30, w31, w30
-
-  pq.mul w24.0, w0.1, w16.1
-  bn.add w31, w31, w24
-  bn.or w30, w31, w30
-
-  pq.mul w24.0, w0.2, w16.2
-  bn.add w31, w31, w24
-  bn.or w30, w31, w30
-
-  pq.mul w24.0, w0.3, w16.3
-  bn.add w31, w31, w24
-  bn.or w30, w31, w30
-
-  pq.mul w24.0, w0.4, w16.4
-  bn.add w31, w31, w24
-  bn.or w30, w31, w30
-
-  pq.mul w24.0, w0.5, w16.5
-  bn.add w31, w31, w24
-  bn.or w30, w31, w30
-
-  pq.mul w24.0, w0.6, w16.6
-  bn.add w31, w31, w24
-  bn.or w30, w31, w30
-
-  pq.mul w24.0, w0.7, w16.7
-  bn.add w31, w31, w24
+  
+  bn.mulqacc.z 
   bn.or w30, w31, w30
 
   /* load s2 for s2 * s2 */
   bn.lid x2, 0(x20)
   bn.lid x3, 0(x20++)
 
-  /* Set idx0/idx1 */
-  pq.pqsru 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 
-
-  loopi 8, 1
-    /* Transformation in Montgomery Domain */
-    pq.scale.ind 0, 0, 0, 0, 1
-
   /* Square s1 and add to norm */
-  pq.mul w24.0, w0.0, w16.0
-  bn.add w31, w31, w24
-  bn.or w30, w31, w30
 
-  pq.mul w24.0, w0.1, w16.1
-  bn.add w31, w31, w24
-  bn.or w30, w31, w30
-
-  pq.mul w24.0, w0.2, w16.2
-  bn.add w31, w31, w24
-  bn.or w30, w31, w30
-
-  pq.mul w24.0, w0.3, w16.3
-  bn.add w31, w31, w24
-  bn.or w30, w31, w30
-
-  pq.mul w24.0, w0.4, w16.4
-  bn.add w31, w31, w24
-  bn.or w30, w31, w30
-
-  pq.mul w24.0, w0.5, w16.5
-  bn.add w31, w31, w24
-  bn.or w30, w31, w30 
-
-  pq.mul w24.0, w0.6, w16.6
-  bn.add w31, w31, w24
-  bn.or w30, w31, w30
-
-  pq.mul w24.0, w0.7, w16.7
-  bn.add w31, w31, w24
   bn.or w30, w31, w30
 
   /* Check if norm exceeds bound */

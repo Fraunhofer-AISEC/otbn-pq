@@ -290,6 +290,10 @@ module tb_otbn
         
            $display("Begin Testcase 300: NTT Falcon-512 Indirect Reg Addr\n");	
        `include "testcase0300.sv"
+
+           $display("Begin Testcase 301: NTT Falcon-512 Indirect Reg Addr\n");	
+       `include "testcase0301.sv"
+
 //	    $display("Begin Testcase 0001: Access of PQSPR\n");	
 //       `include "testcase0001.sv"
 

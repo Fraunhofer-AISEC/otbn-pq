@@ -6,9 +6,62 @@
 /* Falcon-1024 Verify Implementation */
 .section .text
 
+/*************/
+/*  NTT Test */
+/*************/
+
+/* Load operands and constants into WDRs */
+li x2, 0
+
+/* Load prime into WDR w0*/
+la x14, prime
+bn.lid x2, 0(x14)
+
+/* Load prime into PQSR*/
+pq.pqsrw 0, w0
+
+/* Load prime_dash into WDR w0*/
+la x14, prime_dash
+bn.lid x2, 0(x14)
+
+/* Load prime_dash into PQSR*/
+pq.pqsrw 1, w0
+
+/* Load omega0 into WDR w0*/
+la x14, omega0
+bn.lid x2, 0(x14)
+
+/* Load omega into PQSR*/
+pq.pqsrw 3, w0
+
+/* Load psi0 into WDR w0*/
+la x14, psi0
+bn.lid x2, 0(x14)
+
+/* Load psi into PQSR*/
+pq.pqsrw 4, w0
+
+/* NTT(tt) */
+la x20, s2_coef0
+la x19, s2_coef0
+
+jal x1, ntt
+
+ecall
+
 /*************************************************/
 /*  Reduce s2 elements modulo q ([0..q-1] range) */
 /*************************************************/
+
+/* Load operands and constants into WDRs */
+li x2, 0
+
+/* Load prime into WDR w0*/
+la x14, prime
+bn.lid x2, 0(x14)
+
+/* Load prime into PQSR*/
+pq.pqsrw 0, w0
 
 /* input address */
 la x4, s2_coef0
@@ -321,14 +374,8 @@ ntt:
   addi x24, x20, 0
   addi x23, x19, 0
 
-  li x20, 0
-  li x21, 0
-
-  li x7, 16
-  li x6, 2048
-
-  li x9, 2048
-  li x10, 0
+  li x25, 0
+  li x26, 16
 
   /* m = n >> 1 */
   li x2, 128
@@ -345,14 +392,13 @@ ntt:
   /* Set psi as twiddle */
   pq.pqsru 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 
 
-  loopi 4, 17
+  loopi 4, 15
 
     /* Load DMEM(0) into WDR w0*/
     loopi 16, 3
       bn.lid x25++, 0(x24)
       bn.lid x26++, 2048(x24)
-      addi x20, x20, 32
-
+      addi x24, x24, 32
 
     /* Set idx0/idx1 */
     pq.pqsru 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0  
@@ -363,7 +409,7 @@ ntt:
     li x25, 0
     li x26, 16
 
-    loopi 16, 4
+    loopi 16, 3
       bn.sid x25++, 0(x23)
       bn.sid x26++, 2048(x23)
       addi x23, x23, 32
@@ -371,12 +417,10 @@ ntt:
     li x25, 0
     li x26, 16
 
-
-
 /*                 NTT - Layer 512               */
 
-  addi x24, x20, 0
   addi x23, x19, 0
+  addi x24, x19, 0
 
   li x25, 0
   li x26, 16
@@ -469,21 +513,24 @@ loopi 2, 25
 
   /* Load coefficients again */
   addi x24, x19, 0
+  li x25, 0
 
   loopi 32, 2
     bn.lid x25++, 0(x24)
     addi x24, x24, 32
 
-  loopi 8, 11
+  loopi 8, 13
     /* Set psi as twiddle */
     pq.pqsru 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 
-    loop x3, 5
+    loop x3, 7
       /* Set idx0/idx1 */
       pq.pqsru 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0   
       loop x2, 1
         pq.ctbf.ind 0, 0, 0, 0, 1
       /* Update twiddle and increment j */
       pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0 
+      pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+      pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
       pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
     /* Update idx_psi, idx_omega, m and j2 */
     pq.pqsru 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0 
@@ -512,7 +559,8 @@ loopi 2, 25
   li x4, 0
   pq.srw 2, x4
 
-  li x21, 0
+  addi x24, x19, 0
+  li x25, 0
 
   loopi 32, 2
     bn.lid x25++, 1024(x24)
@@ -610,11 +658,11 @@ loopi 2, 25
   li x4, 0
   pq.srw 2, x4
 
-  li x21, 0
-
+  li x25, 0
+  addi x21, x24, 0
   loopi 32, 2
-    bn.lid x25++, 3096(x24)
-    addi x24, x24, 32
+    bn.lid x25++, 2048(x21)
+    addi x21, x21, 32
 
   loopi 8, 16
     /* Set psi as twiddle */
@@ -639,9 +687,11 @@ loopi 2, 25
     pq.srw 2, x4
 
   /* store result from [w1] to dmem */
+  li x25, 0
+  addi x21, x24, 0
   loopi 32, 2
-    bn.sid x25++, 3096(x24)
-    addi x24, x24, 32
+    bn.sid x25++, 2048(x21)
+    addi x21, x21, 32
 
 ret
 
@@ -696,7 +746,6 @@ intt:
   loopi 32, 2
     bn.lid x23++, 0(x24)
     addi x24, x24, 32
-
 
   loopi 8, 13
     /* Set psi as twiddle */
@@ -1190,40 +1239,116 @@ la x4, bitmask32
 li x3, 8
 bn.lid x3, 0(x4) 
 
-/* Load beta squared into w7 */
-la x2, l2bound
-li x3, 7
-bn.lid x3, 0(x2)
+/* Initialize w7 as 0x00...0 */
+li x3, 0
+bn.xor w7, w7, w7
 
-li x2, 0
-li x3, 16
+loopi 64, 30
 
-loopi 64, 42
-
-  /* load s1 for s1 * s1 */
-  bn.lid x2, 0(x19)
+  /* load s1 for s1 * s1 into WDR0 */
   bn.lid x3, 0(x19++)
 
   /* Square s1 and add to norm */
-  
-  bn.mulqacc.z 
+
+  /* Select current coefficient */
+  bn.and w0, w8, w0
+
+  /* s += (z * z) */
+  bn.mulqacc.wo.z w24, w0.0, w0.0, 0
+  bn.and w24, w8, w24
+  bn.add w31, w31, w24
+
+  /* ng |= s */
   bn.or w30, w31, w30
 
-  /* load s2 for s2 * s2 */
-  bn.lid x2, 0(x20)
+  /* Update coefficient to process */
+  bn.or w0, w7, w0 >> 32
+
+  loopi 7, 6
+  
+    /* Select current coefficient */
+    bn.and w0, w8, w0
+
+    /* s += (z * z) */
+    bn.mulqacc.wo.z w24, w0.0, w0.0, 0
+    bn.and w24, w8, w24
+    bn.add w31, w31, w24
+
+    /* ng |= s */
+    bn.or w30, w31, w30
+
+    /* Update coefficient to process */
+    bn.or w0, w7, w0 >> 32
+
+  /* load s2 for s2 * s2  into WDR0 */
   bn.lid x3, 0(x20++)
 
-  /* Square s1 and add to norm */
+  /* Square s2 and add to norm */
 
+  /* Select current coefficient */
+  bn.and w0, w8, w0
+
+  /* s += (z * z) */
+  bn.mulqacc.wo.z w24, w0.0, w0.0, 0
+  bn.and w24, w8, w24
+  bn.add w31, w31, w24
+
+  /* ng |= s */
   bn.or w30, w31, w30
 
+  /* Update coefficient to process */
+  bn.or w0, w7, w0 >> 32
+
+  loopi 7, 6
+  
+    /* Select current coefficient */
+    bn.and w0, w8, w0
+
+    /* s += (z * z) */
+    bn.mulqacc.wo.z w24, w0.0, w0.0, 0
+    bn.and w24, w8, w24
+    bn.add w31, w31, w24
+
+    /* ng |= s */
+    bn.or w30, w31, w30
+
+    /* Update coefficient to process */
+    bn.or w0, w7, w0 >> 32
+
+  addi x31, x31, 1
+  addi x31, x31, 2
+  addi x31, x31, 3
+  addi x31, x31, 4
+  addi x31, x31, 5
+  addi x31, x31, 6
+  addi x31, x31, 7
+  addi x31, x31, 8
+  addi x31, x31, 9
+  addi x31, x31, 10
+  addi x31, x31, 11
+  addi x31, x31, 12
+  addi x31, x31, 13
+
+  li x31, 15
+  addi x31, x31, 1
+
   /* Check if norm exceeds bound */
+
+  /* Load beta squared into w7 */
+  la x2, l2bound
+  li x3, 7
+  bn.lid x3, 0(x2)
+
   bn.cmp w7, w30, FG0
   csrrw x14, 1984, x0
   andi x14, x14, 1
 
   /* If norm exceeds bound x14 is set to 0 */
   xori x14, x14, 1
+
+  /* Write back w30 to check if norm was computed correctly */
+  li x2, 30
+  bn.sid x2, 0(x0)
 
 ret
 
@@ -1243,29 +1368,13 @@ prime_dash:
   .quad 0x0000000000000000
 
 omega0:
-  .quad 0x0000000000000539
+  .word 0x539
+  .word 0x2baf
   .quad 0x0000000000000000
   .quad 0x0000000000000000
   .quad 0x0000000000000000
 
 omega1:
-.word 0x2baf
-.word 0x299b
-.word 0x2f04
-.word 0x1edc
-.word 0x1861
-.word 0x21a6
-.word 0x2bfe
-.word 0x256d
-
-
-psi0:
-  .quad 0x0000000000002BAF
-  .quad 0x0000000000000000
-  .quad 0x0000000000000000
-  .quad 0x0000000000000000
-
-psi1:
 .word 0x299b
 .word 0x2f04
 .word 0x1edc
@@ -1275,33 +1384,49 @@ psi1:
 .word 0x256d
 .word 0x201d
 
+psi0:
+  .word 0x2baf
+  .word 0x299b
+  .quad 0x0000000000000000
+  .quad 0x0000000000000000
+  .quad 0x0000000000000000
+
+psi1:
+  .word 0x2f04
+  .word 0x1edc
+  .word 0x1861
+  .word 0x21a6
+  .word 0x2bfe
+  .word 0x256d
+  .word 0x201d
+  .word 0xb72
 
 inv_omega0:
-  .quad 0x00000000000025c9
+  .quad 0x0000000000001b53
   .quad 0x0000000000000000
   .quad 0x0000000000000000
   .quad 0x0000000000000000
 
 inv_omega1:
-  .quad 0x00000000000025c9
+  .quad 0x0000000000001b53
   .quad 0x0000000000000000
   .quad 0x0000000000000000
   .quad 0x0000000000000000
 
 inv_psi0:
-  .quad 0x0000000000001b53
+  .quad 0x0000000000002f42
   .quad 0x0000000000000000
   .quad 0x0000000000000000
   .quad 0x0000000000000000
 
 inv_psi1:
-  .quad 0x0000000000001b53
+  .quad 0x0000000000002f42
   .quad 0x0000000000000000
   .quad 0x0000000000000000
   .quad 0x0000000000000000
 
 n1:
-  .quad 0x0000000000001d56
+  .quad 0x0000000000000eab
   .quad 0x0000000000000000
   .quad 0x0000000000000000
   .quad 0x0000000000000000

@@ -47,6 +47,33 @@ la x19, s2_coef0
 
 jal x1, ntt
 
+li x2, 0
+/* Load inv_omega0 into WDR w0*/
+la x14, inv_omega0
+bn.lid x2, 0(x14)
+
+/* Load omega into PQSR*/
+pq.pqsrw 3, w0
+
+/* Load inv_psi0 into WDR w0*/
+la x14, inv_psi0
+bn.lid x2, 0(x14)
+
+/* Load psi into PQSR*/
+pq.pqsrw 4, w0
+
+/* Load n1 into WDR w0*/
+la x14, n1
+bn.lid x2, 0(x14)
+
+/* Load n^-1 into PQSR*/
+pq.pqsrw 7, w0
+
+/* INTT(h) */
+la x20, h_coef0
+la x19, h_coef0
+
+jal x1, intt
 ecall
 
 /*************************************************/
@@ -741,10 +768,10 @@ intt:
 
   /* Top Part */
   addi x24, x20, 0
-  li x23, 0
+  li x25, 0
 
   loopi 32, 2
-    bn.lid x23++, 0(x24)
+    bn.lid x25++, 0(x24)
     addi x24, x24, 32
 
   loopi 8, 13
@@ -768,12 +795,12 @@ intt:
 
 
   li x25, 0
-  addi x24, x20, 0
+  addi x23, x19, 0
 
   /* store result to dmem */
   loopi 32, 2
-    bn.sid x25++, 0(x24)
-    addi x24, x24, 32
+    bn.sid x25++, 0(x23)
+    addi x23, x23, 32
 
   /* Top Bottom Part */
   li x2, 0
@@ -833,12 +860,12 @@ intt:
     pq.srw 2, x4
 
   li x25, 0
-  addi x24, x20, 0
+  addi x23, x19, 0
 
   /* store result to dmem */
   loopi 32, 2
-    bn.sid x25++, 1024(x24)
-    addi x24, x24, 32
+    bn.sid x25++, 1024(x23)
+    addi x23, x23, 32
 
   /* Bottom Top Part */
   li x2, 0
@@ -873,7 +900,7 @@ intt:
   addi x24, x20, 0
 
   loopi 32, 2
-    bn.lid x25++, 1024(x24)
+    bn.lid x25++, 2048(x24)
     addi x24, x24, 32
 
   loopi 8, 14
@@ -897,12 +924,12 @@ intt:
     pq.srw 2, x4
 
   li x25, 0
-  addi x24, x20, 0
+  addi x23, x19, 0
 
   /* store result to dmem */
   loopi 32, 2
-    bn.sid x25++, 1024(x24)
-    addi x24, x24, 32
+    bn.sid x25++, 2048(x23)
+    addi x23, x23, 32
 
 
   /* Bottom Part */
@@ -935,10 +962,10 @@ intt:
   pq.srw 2, x4
 
   li x25, 0
-  addi x24, x20, 0
+  addi x24, x20, 1024
 
   loopi 32, 2
-    bn.lid x25++, 1024(x24)
+    bn.lid x25++, 2048(x24)
     addi x24, x24, 32
 
   loopi 8, 16
@@ -964,15 +991,17 @@ intt:
     pq.srw 2, x4
 
   li x25, 0
-  addi x24, x20, 0
+  addi x23, x19, 1024
 
   /* store result to dmem */
   loopi 32, 2
-    bn.sid x25++, 1024(x24)
-    addi x24, x24, 32
+    bn.sid x25++, 2048(x23)
+    addi x23, x23, 32
 
   /* Merge - NTT Layer 512 */
-  addi x24, x20, 0
+  addi x24, x19, 0
+  addi x23, x19, 0
+
   li x25, 0
   li x26, 16
 
@@ -991,8 +1020,8 @@ intt:
   /* Set psi as twiddle */
   pq.pqsru 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 
 
-  loopi 2, 18
-    loopi 2, 18
+  loopi 2, 19
+    loopi 2, 15
 
       /* Load DMEM(0) into WDR w0*/
       loopi 16, 3
@@ -1009,23 +1038,70 @@ intt:
       li x25, 0
       li x26, 16
 
-      pq.srw 3, x25
-
-      loopi 256, 1
-        pq.scale.ind 0, 0, 0, 0, 1
-
       loopi 16, 3
-        bn.sid x25++, 0(x20)
-        bn.sid x26++, 1024(x20)
-        addi x20, x20, 32
+        bn.sid x25++, 0(x23)
+        bn.sid x26++, 1024(x23)
+        addi x23, x23, 32
 
       li x25, 0
       li x26, 16
 
     pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
 
+    addi x24, x24, 1024
+    addi x23, x23, 1024
+
+/* Update psi, omega, m and j2 */
+pq.pqsru 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+
 /* Merge - NTT Layer 1024 */
 
+  addi x24, x19, 0
+  addi x23, x19, 0
+
+  /* m = n >> 1 */
+  li x2, 128
+  pq.srw 0, x2
+
+  /* j2 = 1 */
+  li x3, 1
+  pq.srw 1, x3
+
+  /* j = 0 */
+  li x4, 0
+  pq.srw 2, x4
+
+  /* Set psi as twiddle */
+  pq.pqsru 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 
+
+  loopi 4, 18
+
+    /* Load DMEM(0) into WDR w0*/
+    loopi 16, 3
+      bn.lid x25++, 0(x24)
+      bn.lid x26++, 2048(x24)
+      addi x24, x24, 32
+
+    /* Set idx0/idx1 */
+    pq.pqsru 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0  
+
+    loop x2, 1
+      pq.gsbf.ind 0, 0, 0, 0, 1
+  
+    li x25, 0
+    li x26, 16
+
+    pq.srw 3, x25
+    loopi 256, 1
+      pq.scale.ind 0, 0, 0, 0, 1
+
+    loopi 16, 3
+      bn.sid x25++, 0(x23)
+      bn.sid x26++, 2048(x23)
+      addi x23, x23, 32
+
+    li x25, 0
+    li x26, 16
 
 
 ret

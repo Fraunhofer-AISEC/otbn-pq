@@ -185,9 +185,6 @@ loopi 64, 3
   addi x19, x19, 32
   addi x20, x20, 32
 
-
-/* Correct until this point here */
-
 /************************************************************************************/
 /* Signature is valid if and only if the aggregate (-s1,s2) vector is short enough. */
 /************************************************************************************/

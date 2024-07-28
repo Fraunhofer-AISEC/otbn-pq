@@ -6,76 +6,6 @@
 /* Falcon-1024 Verify Implementation */
 .section .text
 
-/*************/
-/*  NTT Test */
-/*************/
-
-/* Load operands and constants into WDRs */
-li x2, 0
-
-/* Load prime into WDR w0*/
-la x14, prime
-bn.lid x2, 0(x14)
-
-/* Load prime into PQSR*/
-pq.pqsrw 0, w0
-
-/* Load prime_dash into WDR w0*/
-la x14, prime_dash
-bn.lid x2, 0(x14)
-
-/* Load prime_dash into PQSR*/
-pq.pqsrw 1, w0
-
-/* Load omega0 into WDR w0*/
-la x14, omega0
-bn.lid x2, 0(x14)
-
-/* Load omega into PQSR*/
-pq.pqsrw 3, w0
-
-/* Load psi0 into WDR w0*/
-la x14, psi0
-bn.lid x2, 0(x14)
-
-/* Load psi into PQSR*/
-pq.pqsrw 4, w0
-
-/* NTT(tt) */
-la x20, s2_coef0
-la x19, s2_coef0
-
-jal x1, ntt
-
-li x2, 0
-/* Load inv_omega0 into WDR w0*/
-la x14, inv_omega0
-bn.lid x2, 0(x14)
-
-/* Load omega into PQSR*/
-pq.pqsrw 3, w0
-
-/* Load inv_psi0 into WDR w0*/
-la x14, inv_psi0
-bn.lid x2, 0(x14)
-
-/* Load psi into PQSR*/
-pq.pqsrw 4, w0
-
-/* Load n1 into WDR w0*/
-la x14, n1
-bn.lid x2, 0(x14)
-
-/* Load n^-1 into PQSR*/
-pq.pqsrw 7, w0
-
-/* INTT(h) */
-la x20, h_coef0
-la x19, h_coef0
-
-jal x1, intt
-ecall
-
 /*************************************************/
 /*  Reduce s2 elements modulo q ([0..q-1] range) */
 /*************************************************/
@@ -107,7 +37,6 @@ jal x1, reduce
 /*    NTT    */
 /*************/
 
-
 /* Load operands and constants into WDRs */
 li x2, 0
 
@@ -118,7 +47,6 @@ bn.lid x2, 0(x14)
 /* Load prime into PQSR*/
 pq.pqsrw 0, w0
 
-
 /* Load prime_dash into WDR w0*/
 la x14, prime_dash
 bn.lid x2, 0(x14)
@@ -126,14 +54,12 @@ bn.lid x2, 0(x14)
 /* Load prime_dash into PQSR*/
 pq.pqsrw 1, w0
 
-
 /* Load omega0 into WDR w0*/
 la x14, omega0
 bn.lid x2, 0(x14)
 
 /* Load omega into PQSR*/
 pq.pqsrw 3, w0
-
 
 /* Load psi0 into WDR w0*/
 la x14, psi0
@@ -147,6 +73,27 @@ la x20, tt_coef0
 la x19, tt_coef0
 jal x1, ntt
 
+/* Load operands and constants into WDRs */
+li x2, 0
+
+/* Load omega0 into WDR w0*/
+la x14, omega0
+bn.lid x2, 0(x14)
+
+/* Load omega into PQSR*/
+pq.pqsrw 3, w0
+
+/* Load psi0 into WDR w0*/
+la x14, psi0
+bn.lid x2, 0(x14)
+
+/* Load psi into PQSR*/
+pq.pqsrw 4, w0
+
+/* NTT(tt) */
+la x20, h_coef0
+la x19, h_coef0
+jal x1, ntt
 
 
 /*************/
@@ -236,9 +183,6 @@ loopi 128, 3
   addi x19, x19, 32
   addi x20, x20, 32
 
-
-/* Correct until this point here */
-
 /************************************************************************************/
 /* Signature is valid if and only if the aggregate (-s1,s2) vector is short enough. */
 /************************************************************************************/
@@ -285,7 +229,7 @@ li x2, 0
 li x3, 16
 li x8, 24
 
-loopi 64, 11
+loopi 128, 11
 
   bn.lid x2, 0(x4++)
   bn.lid x3, 0(x5++)
@@ -339,7 +283,7 @@ li x2, 0
 li x3, 16
 li x8, 24
 
-loopi 64, 14
+loopi 128, 14
 
   bn.lid x2, 0(x4++)
   bn.lid x3, 0(x5++)
@@ -1137,7 +1081,7 @@ li x8, 24
 /* Generate all zero vector */
 bn.xor w16, w16, w16
 
-loopi 64, 10
+loopi 128, 10
 
   bn.lid x2, 0(x4++)
 
@@ -1319,7 +1263,7 @@ bn.lid x3, 0(x4)
 li x3, 0
 bn.xor w7, w7, w7
 
-loopi 64, 30
+loopi 128, 30
 
   /* load s1 for s1 * s1 into WDR0 */
   bn.lid x3, 0(x19++)

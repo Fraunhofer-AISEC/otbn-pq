@@ -1461,7 +1461,7 @@ bitmask_extended:
   .quad 0x0000000000000000
 
 l2bound:
-  .word 0x02075426
+  .word 0x0430299A
 
 l2bound_extended: 
   .word 0x00000000

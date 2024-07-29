@@ -3,12 +3,22 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
 
-/* Falcon-512 Verify Implementation */
+/* Falcon-1024 Verify Implementation */
 .section .text
 
 /*************************************************/
 /*  Reduce s2 elements modulo q ([0..q-1] range) */
 /*************************************************/
+
+/* Load operands and constants into WDRs */
+li x2, 0
+
+/* Load prime into WDR w0*/
+la x14, prime
+bn.lid x2, 0(x14)
+
+/* Load prime into PQSR*/
+pq.pqsrw 0, w0
 
 /* input address */
 la x4, s2_coef0
@@ -27,7 +37,6 @@ jal x1, reduce
 /*    NTT    */
 /*************/
 
-
 /* Load operands and constants into WDRs */
 li x2, 0
 
@@ -38,7 +47,6 @@ bn.lid x2, 0(x14)
 /* Load prime into PQSR*/
 pq.pqsrw 0, w0
 
-
 /* Load prime_dash into WDR w0*/
 la x14, prime_dash
 bn.lid x2, 0(x14)
@@ -46,14 +54,12 @@ bn.lid x2, 0(x14)
 /* Load prime_dash into PQSR*/
 pq.pqsrw 1, w0
 
-
 /* Load omega0 into WDR w0*/
 la x14, omega0
 bn.lid x2, 0(x14)
 
 /* Load omega into PQSR*/
 pq.pqsrw 3, w0
-
 
 /* Load psi0 into WDR w0*/
 la x14, psi0
@@ -67,6 +73,27 @@ la x20, tt_coef0
 la x19, tt_coef0
 jal x1, ntt
 
+/* Load operands and constants into WDRs */
+li x2, 0
+
+/* Load omega0 into WDR w0*/
+la x14, omega0
+bn.lid x2, 0(x14)
+
+/* Load omega into PQSR*/
+pq.pqsrw 3, w0
+
+/* Load psi0 into WDR w0*/
+la x14, psi0
+bn.lid x2, 0(x14)
+
+/* Load psi into PQSR*/
+pq.pqsrw 4, w0
+
+/* NTT(tt) */
+la x20, h_coef0
+la x19, h_coef0
+jal x1, ntt
 
 
 /*************/
@@ -151,13 +178,10 @@ jal x1, pointwise_sub
 la x20, tt_coef0
 la x19, tt_coef0
 
-loopi 64, 3
+loopi 128, 3
   jal x1, normalize
   addi x19, x19, 32
   addi x20, x20, 32
-
-
-/* Correct until this point here */
 
 /************************************************************************************/
 /* Signature is valid if and only if the aggregate (-s1,s2) vector is short enough. */
@@ -205,7 +229,7 @@ li x2, 0
 li x3, 16
 li x8, 24
 
-loopi 64, 11
+loopi 128, 11
 
   bn.lid x2, 0(x4++)
   bn.lid x3, 0(x5++)
@@ -259,7 +283,7 @@ li x2, 0
 li x3, 16
 li x8, 24
 
-loopi 64, 14
+loopi 128, 14
 
   bn.lid x2, 0(x4++)
   bn.lid x3, 0(x5++)
@@ -316,7 +340,7 @@ ret
 
 ntt:
 
-/*                 NTT - Layer 512               */
+/*                 NTT - Layer 1024              */
 
   addi x24, x20, 0
   addi x23, x19, 0
@@ -338,6 +362,71 @@ ntt:
 
   /* Set psi as twiddle */
   pq.pqsru 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 
+
+  loopi 4, 15
+
+    /* Load DMEM(0) into WDR w0*/
+    loopi 16, 3
+      bn.lid x25++, 0(x24)
+      bn.lid x26++, 2048(x24)
+      addi x24, x24, 32
+
+    /* Set idx0/idx1 */
+    pq.pqsru 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0  
+
+    loop x2, 1
+      pq.ctbf.ind 0, 0, 0, 0, 1
+
+    li x25, 0
+    li x26, 16
+
+    loopi 16, 3
+      bn.sid x25++, 0(x23)
+      bn.sid x26++, 2048(x23)
+      addi x23, x23, 32
+
+    li x25, 0
+    li x26, 16
+
+/*                 NTT - Layer 512               */
+
+  addi x23, x19, 0
+  addi x24, x19, 0
+
+  li x25, 0
+  li x26, 16
+
+  /* m = n >> 1 */
+  li x2, 128
+  pq.srw 0, x2
+
+  /* j2 = 1 */
+  li x3, 1
+  pq.srw 1, x3
+
+  /* j = 0 */
+  li x4, 0
+  pq.srw 2, x4
+
+  /* Update idx_psi and idx_omega */
+  pq.pqsru 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0 
+
+  /* Set psi as twiddle */
+  pq.pqsru 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 
+
+loopi 2, 25
+
+  /* m = n >> 1 */
+  li x2, 128
+  pq.srw 0, x2
+
+  /* j2 = 1 */
+  li x3, 1
+  pq.srw 1, x3
+
+  /* j = 0 */
+  li x4, 0
+  pq.srw 2, x4
 
   loopi 2, 15
 
@@ -364,7 +453,17 @@ ntt:
     li x25, 0
     li x26, 16
 
+  pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
+  addi x24, x24, 1024
+  addi x23, x23, 1024
+
+
 /*              NTT - Layer 256 -> 1             */
+
+  loopi 7, 1
+    /* Update idx_psi and idx_omega */
+    pq.pqsru 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0 
 
   /* Reload omega and psi */
 
@@ -385,21 +484,24 @@ ntt:
 
   /* Load coefficients again */
   addi x24, x19, 0
+  li x25, 0
 
   loopi 32, 2
     bn.lid x25++, 0(x24)
     addi x24, x24, 32
 
-  loopi 8, 11
+  loopi 8, 13
     /* Set psi as twiddle */
     pq.pqsru 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 
-    loop x3, 5
+    loop x3, 7
       /* Set idx0/idx1 */
       pq.pqsru 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0   
       loop x2, 1
         pq.ctbf.ind 0, 0, 0, 0, 1
       /* Update twiddle and increment j */
       pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0 
+      pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+      pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
       pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
     /* Update idx_psi, idx_omega, m and j2 */
     pq.pqsru 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0 
@@ -415,6 +517,55 @@ ntt:
   loopi 32, 2
     bn.sid x25++, 0(x24)
     addi x24, x24, 32
+
+  /* m = n >> 1 */
+  li x2, 128
+  pq.srw 0, x2
+
+  /* j2 = 1 */
+  li x3, 1
+  pq.srw 1, x3
+
+  /* j = 0 */
+  li x4, 0
+  pq.srw 2, x4
+
+  addi x24, x19, 0
+  li x25, 0
+
+  loopi 32, 2
+    bn.lid x25++, 1024(x24)
+    addi x24, x24, 32
+    
+  loopi 8, 15
+    /* Set psi as twiddle */
+    pq.pqsru 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 
+    pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+    pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+    loop x3, 7
+      /* Set idx0/idx1 */
+      pq.pqsru 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0   
+      loop x2, 1
+        pq.ctbf.ind 0, 0, 0, 0, 1
+      /* Update twiddle and increment j */
+      pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0 
+      pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+      pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+      pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+    /* Update idx_psi, idx_omega, m and j2 */
+    pq.pqsru 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0 
+    slli x3, x3, 1
+    srli x2, x2, 1
+    pq.srw 2, x4
+
+  addi x24, x19, 0
+  li x25, 0
+
+  /* store results to dmem */
+  loopi 32, 2
+    bn.sid x25++, 1024(x24)
+    addi x24, x24, 32
+
 
 
   /* m = n >> 1 */
@@ -434,20 +585,22 @@ ntt:
 
   /* load coefficients from dmem */
   loopi 32, 2
-    bn.lid x25++, 1024(x24)
+    bn.lid x25++, 2048(x24)
     addi x24, x24, 32
 
-  loopi 8, 12
+  loopi 8, 14
     /* Set psi as twiddle */
     pq.pqsru 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 
     pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
-    loop x3, 5
+    loop x3, 7
       /* Set idx0/idx1 */
       pq.pqsru 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0   
       loop x2, 1
         pq.ctbf.ind 0, 0, 0, 0, 1
       /* Update twiddle and increment j */
       pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0 
+      pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+      pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
       pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
     /* Update idx_psi, idx_omega, m and j2 */
     pq.pqsru 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0 
@@ -460,8 +613,56 @@ ntt:
 
   /* store result from [w1] to dmem */
   loopi 32, 2
-    bn.sid x25++, 1024(x24)
+    bn.sid x25++, 2048(x24)
     addi x24, x24, 32
+
+
+  /* m = n >> 1 */
+  li x2, 128
+  pq.srw 0, x2
+
+  /* j2 = 1 */
+  li x3, 1
+  pq.srw 1, x3
+
+  /* j = 0 */
+  li x4, 0
+  pq.srw 2, x4
+
+  li x25, 0
+  addi x21, x24, 0
+  loopi 32, 2
+    bn.lid x25++, 2048(x21)
+    addi x21, x21, 32
+
+  loopi 8, 16
+    /* Set psi as twiddle */
+    pq.pqsru 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 
+    pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+    pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+    pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+    loop x3, 7
+      /* Set idx0/idx1 */
+      pq.pqsru 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0   
+      loop x2, 1
+        pq.ctbf.ind 0, 0, 0, 0, 1
+      /* Update twiddle and increment j */
+      pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0 
+      pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+      pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+      pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+    /* Update idx_psi, idx_omega, m and j2 */
+    pq.pqsru 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0 
+    slli x3, x3, 1
+    srli x2, x2, 1
+    pq.srw 2, x4
+
+  /* store result from [w1] to dmem */
+  li x25, 0
+  addi x21, x24, 0
+  loopi 32, 2
+    bn.sid x25++, 2048(x21)
+    addi x21, x21, 32
 
 ret
 
@@ -511,23 +712,24 @@ intt:
 
   /* Top Part */
   addi x24, x20, 0
-  li x23, 0
+  li x25, 0
 
   loopi 32, 2
-    bn.lid x23++, 0(x24)
+    bn.lid x25++, 0(x24)
     addi x24, x24, 32
 
-
-  loopi 8, 11
+  loopi 8, 13
     /* Set psi as twiddle */
     pq.pqsru 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 
-    loop x3, 5
+    loop x3, 7
       /* Set idx0/idx1 */
       pq.pqsru 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0  
       loop x2, 1
         pq.gsbf.ind 0, 0, 0, 0, 1
       /* Update twiddle and increment j */
       pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0
+      pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0  
+      pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0  
       pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0  
     /* Update psi, omega, m and j2 */
     pq.pqsru 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0 
@@ -537,12 +739,142 @@ intt:
 
 
   li x25, 0
-  addi x24, x20, 0
+  addi x23, x19, 0
 
   /* store result to dmem */
   loopi 32, 2
-    bn.sid x25++, 0(x24)
+    bn.sid x25++, 0(x23)
+    addi x23, x23, 32
+
+  /* Top Bottom Part */
+  li x2, 0
+  la x25, inv_omega0
+
+  /* Load DMEM(64) into WDR w0*/
+  bn.lid x2, 0(x25)
+
+  /* Load omega into PQSR*/
+  pq.pqsrw 3, w0
+
+  la x25, inv_psi0
+  /* Load DMEM(96) into WDR w0*/
+  bn.lid x2, 0(x25)
+
+  /* Load psi into PQSR*/
+  pq.pqsrw 4, w0
+
+  /* m = l */
+  li x2, 1
+  pq.srw 0, x2
+
+  /* j2 = n >> 1 */
+  li x3, 128
+  pq.srw 1, x3
+
+  /* j = 0 */
+  li x4, 0
+  pq.srw 2, x4
+
+  li x25, 0
+  addi x24, x20, 0
+
+  loopi 32, 2
+    bn.lid x25++, 1024(x24)
     addi x24, x24, 32
+
+  loopi 8, 15
+    /* Set psi as twiddle */
+    pq.pqsru 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 
+    pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+    pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    loop x3, 7
+      /* Set idx0/idx1 */
+      pq.pqsru 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0  
+      loop x2, 1
+        pq.gsbf.ind 0, 0, 0, 0, 1
+      /* Update twiddle and increment j */
+      pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0 
+      pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+      pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+      pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+    /* Update psi, omega, m and j2 */
+    pq.pqsru 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0 
+    srli x3, x3, 1
+    slli x2, x2, 1
+    pq.srw 2, x4
+
+  li x25, 0
+  addi x23, x19, 0
+
+  /* store result to dmem */
+  loopi 32, 2
+    bn.sid x25++, 1024(x23)
+    addi x23, x23, 32
+
+  /* Bottom Top Part */
+  li x2, 0
+  la x25, inv_omega0
+
+  /* Load DMEM(64) into WDR w0*/
+  bn.lid x2, 0(x25)
+
+  /* Load omega into PQSR*/
+  pq.pqsrw 3, w0
+
+  la x25, inv_psi0
+  /* Load DMEM(96) into WDR w0*/
+  bn.lid x2, 0(x25)
+
+  /* Load psi into PQSR*/
+  pq.pqsrw 4, w0
+
+  /* m = l */
+  li x2, 1
+  pq.srw 0, x2
+
+  /* j2 = n >> 1 */
+  li x3, 128
+  pq.srw 1, x3
+
+  /* j = 0 */
+  li x4, 0
+  pq.srw 2, x4
+
+  li x25, 0
+  addi x24, x20, 0
+
+  loopi 32, 2
+    bn.lid x25++, 2048(x24)
+    addi x24, x24, 32
+
+  loopi 8, 14
+    /* Set psi as twiddle */
+    pq.pqsru 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 
+    pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+    loop x3, 7
+      /* Set idx0/idx1 */
+      pq.pqsru 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0  
+      loop x2, 1
+        pq.gsbf.ind 0, 0, 0, 0, 1
+      /* Update twiddle and increment j */
+      pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0
+      pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0  
+      pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0  
+      pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0  
+    /* Update psi, omega, m and j2 */
+    pq.pqsru 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0 
+    srli x3, x3, 1
+    slli x2, x2, 1
+    pq.srw 2, x4
+
+  li x25, 0
+  addi x23, x19, 0
+
+  /* store result to dmem */
+  loopi 32, 2
+    bn.sid x25++, 2048(x23)
+    addi x23, x23, 32
+
 
   /* Bottom Part */
   li x2, 0
@@ -573,28 +905,28 @@ intt:
   li x4, 0
   pq.srw 2, x4
 
-  /* mode = 1 */
-  li x5, 1
-  pq.srw 5, x5
-
   li x25, 0
-  addi x24, x20, 0
+  addi x24, x20, 1024
 
   loopi 32, 2
-    bn.lid x25++, 1024(x24)
+    bn.lid x25++, 2048(x24)
     addi x24, x24, 32
 
-  loopi 8, 12
+  loopi 8, 16
     /* Set psi as twiddle */
     pq.pqsru 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 
     pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
-    loop x3, 5
+    pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+    loop x3, 7
       /* Set idx0/idx1 */
       pq.pqsru 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0  
       loop x2, 1
         pq.gsbf.ind 0, 0, 0, 0, 1
       /* Update twiddle and increment j */
       pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0 
+      pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+      pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
       pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
     /* Update psi, omega, m and j2 */
     pq.pqsru 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0 
@@ -603,15 +935,17 @@ intt:
     pq.srw 2, x4
 
   li x25, 0
-  addi x24, x20, 0
+  addi x23, x19, 1024
 
   /* store result to dmem */
   loopi 32, 2
-    bn.sid x25++, 1024(x24)
-    addi x24, x24, 32
+    bn.sid x25++, 2048(x23)
+    addi x23, x23, 32
 
-  /* Merge */
-  addi x24, x20, 0
+  /* Merge - NTT Layer 512 */
+  addi x24, x19, 0
+  addi x23, x19, 0
+
   li x25, 0
   li x26, 16
 
@@ -630,12 +964,66 @@ intt:
   /* Set psi as twiddle */
   pq.pqsru 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 
 
-  loopi 2, 18
+  loopi 2, 19
+    loopi 2, 15
+
+      /* Load DMEM(0) into WDR w0*/
+      loopi 16, 3
+        bn.lid x25++, 0(x24)
+        bn.lid x26++, 1024(x24)
+        addi x24, x24, 32
+
+      /* Set idx0/idx1 */
+      pq.pqsru 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0  
+
+      loop x2, 1
+        pq.gsbf.ind 0, 0, 0, 0, 1
+
+      li x25, 0
+      li x26, 16
+
+      loopi 16, 3
+        bn.sid x25++, 0(x23)
+        bn.sid x26++, 1024(x23)
+        addi x23, x23, 32
+
+      li x25, 0
+      li x26, 16
+
+    pq.pqsru 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+
+    addi x24, x24, 1024
+    addi x23, x23, 1024
+
+/* Update psi, omega, m and j2 */
+pq.pqsru 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+
+/* Merge - NTT Layer 1024 */
+
+  addi x24, x19, 0
+  addi x23, x19, 0
+
+  /* m = n >> 1 */
+  li x2, 128
+  pq.srw 0, x2
+
+  /* j2 = 1 */
+  li x3, 1
+  pq.srw 1, x3
+
+  /* j = 0 */
+  li x4, 0
+  pq.srw 2, x4
+
+  /* Set psi as twiddle */
+  pq.pqsru 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 
+
+  loopi 4, 18
 
     /* Load DMEM(0) into WDR w0*/
     loopi 16, 3
       bn.lid x25++, 0(x24)
-      bn.lid x26++, 1024(x24)
+      bn.lid x26++, 2048(x24)
       addi x24, x24, 32
 
     /* Set idx0/idx1 */
@@ -643,22 +1031,22 @@ intt:
 
     loop x2, 1
       pq.gsbf.ind 0, 0, 0, 0, 1
-
+  
     li x25, 0
     li x26, 16
 
     pq.srw 3, x25
-
     loopi 256, 1
       pq.scale.ind 0, 0, 0, 0, 1
 
     loopi 16, 3
-      bn.sid x25++, 0(x20)
-      bn.sid x26++, 1024(x20)
-      addi x20, x20, 32
+      bn.sid x25++, 0(x23)
+      bn.sid x26++, 2048(x23)
+      addi x23, x23, 32
 
     li x25, 0
     li x26, 16
+
 
 ret
 
@@ -693,7 +1081,7 @@ li x8, 24
 /* Generate all zero vector */
 bn.xor w16, w16, w16
 
-loopi 64, 10
+loopi 128, 10
 
   bn.lid x2, 0(x4++)
 
@@ -875,7 +1263,7 @@ bn.lid x3, 0(x4)
 li x3, 0
 bn.xor w7, w7, w7
 
-loopi 64, 30
+loopi 128, 30
 
   /* load s1 for s1 * s1 into WDR0 */
   bn.lid x3, 0(x19++)
@@ -1000,29 +1388,13 @@ prime_dash:
   .quad 0x0000000000000000
 
 omega0:
-  .quad 0x0000000000000539
+  .word 0x539
+  .word 0x2baf
   .quad 0x0000000000000000
   .quad 0x0000000000000000
   .quad 0x0000000000000000
 
 omega1:
-.word 0x2baf
-.word 0x299b
-.word 0x2f04
-.word 0x1edc
-.word 0x1861
-.word 0x21a6
-.word 0x2bfe
-.word 0x256d
-
-
-psi0:
-  .quad 0x0000000000002BAF
-  .quad 0x0000000000000000
-  .quad 0x0000000000000000
-  .quad 0x0000000000000000
-
-psi1:
 .word 0x299b
 .word 0x2f04
 .word 0x1edc
@@ -1032,33 +1404,49 @@ psi1:
 .word 0x256d
 .word 0x201d
 
+psi0:
+  .word 0x2baf
+  .word 0x299b
+  .quad 0x0000000000000000
+  .quad 0x0000000000000000
+  .quad 0x0000000000000000
+
+psi1:
+  .word 0x2f04
+  .word 0x1edc
+  .word 0x1861
+  .word 0x21a6
+  .word 0x2bfe
+  .word 0x256d
+  .word 0x201d
+  .word 0xb72
 
 inv_omega0:
-  .quad 0x00000000000025c9
+  .quad 0x0000000000001b53
   .quad 0x0000000000000000
   .quad 0x0000000000000000
   .quad 0x0000000000000000
 
 inv_omega1:
-  .quad 0x00000000000025c9
+  .quad 0x0000000000001b53
   .quad 0x0000000000000000
   .quad 0x0000000000000000
   .quad 0x0000000000000000
 
 inv_psi0:
-  .quad 0x0000000000001b53
+  .quad 0x0000000000002f42
   .quad 0x0000000000000000
   .quad 0x0000000000000000
   .quad 0x0000000000000000
 
 inv_psi1:
-  .quad 0x0000000000001b53
+  .quad 0x0000000000002f42
   .quad 0x0000000000000000
   .quad 0x0000000000000000
   .quad 0x0000000000000000
 
 n1:
-  .quad 0x0000000000001d56
+  .quad 0x0000000000000eab
   .quad 0x0000000000000000
   .quad 0x0000000000000000
   .quad 0x0000000000000000
@@ -1073,7 +1461,7 @@ bitmask_extended:
   .quad 0x0000000000000000
 
 l2bound:
-  .word 0x02075426
+  .word 0x0430299A
 
 l2bound_extended: 
   .word 0x00000000
@@ -1471,6 +1859,390 @@ s2_coef63:
   .quad 0x000001fd000001fc
   .quad 0x000001ff000001fe
 
+s2_coef64:
+  .quad 0x0000020100000200
+  .quad 0x0000020300000202
+  .quad 0x0000020500000204
+  .quad 0x0000020700000206
+
+s2_coef65:
+  .quad 0x0000020900000208
+  .quad 0x0000020b0000020a
+  .quad 0x0000020d0000020c
+  .quad 0x0000020f0000020e
+
+s2_coef66:
+  .quad 0x0000021100000210
+  .quad 0x0000021300000212
+  .quad 0x0000021500000214
+  .quad 0x0000021700000216
+
+s2_coef67:
+  .quad 0x0000021900000218
+  .quad 0x0000021b0000021a
+  .quad 0x0000021d0000021c
+  .quad 0x0000021f0000021e
+
+s2_coef68:
+  .quad 0x0000022100000220
+  .quad 0x0000022300000222
+  .quad 0x0000022500000224
+  .quad 0x0000022700000226
+
+s2_coef69:
+  .quad 0x0000022900000228
+  .quad 0x0000022b0000022a
+  .quad 0x0000022d0000022c
+  .quad 0x0000022f0000022e
+
+s2_coef70:
+  .quad 0x0000023100000230
+  .quad 0x0000023300000232
+  .quad 0x0000023500000234
+  .quad 0x0000023700000236
+
+s2_coef71:
+  .quad 0x0000023900000238
+  .quad 0x0000023b0000023a
+  .quad 0x0000023d0000023c
+  .quad 0x0000023f0000023e
+
+s2_coef72:
+  .quad 0x0000024100000240
+  .quad 0x0000024300000242
+  .quad 0x0000024500000244
+  .quad 0x0000024700000246
+
+s2_coef73:
+  .quad 0x0000024900000248
+  .quad 0x0000024b0000024a
+  .quad 0x0000024d0000024c
+  .quad 0x0000024f0000024e
+
+s2_coef74:
+  .quad 0x0000025100000250
+  .quad 0x0000025300000252
+  .quad 0x0000025500000254
+  .quad 0x0000025700000256
+
+s2_coef75:
+  .quad 0x0000025900000258
+  .quad 0x0000025b0000025a
+  .quad 0x0000025d0000025c
+  .quad 0x0000025f0000025e
+
+s2_coef76:
+  .quad 0x0000026100000260
+  .quad 0x0000026300000262
+  .quad 0x0000026500000264
+  .quad 0x0000026700000266
+
+s2_coef77:
+  .quad 0x0000026900000268
+  .quad 0x0000026b0000026a
+  .quad 0x0000026d0000026c
+  .quad 0x0000026f0000026e
+
+s2_coef78:
+  .quad 0x0000027100000270
+  .quad 0x0000027300000272
+  .quad 0x0000027500000274
+  .quad 0x0000027700000276
+
+s2_coef79:
+  .quad 0x0000027900000278
+  .quad 0x0000027b0000027a
+  .quad 0x0000027d0000027c
+  .quad 0x0000027f0000027e
+
+s2_coef80:
+  .quad 0x0000028100000280
+  .quad 0x0000028300000282
+  .quad 0x0000028500000284
+  .quad 0x0000028700000286
+
+s2_coef81:
+  .quad 0x0000028900000288
+  .quad 0x0000028b0000028a
+  .quad 0x0000028d0000028c
+  .quad 0x0000028f0000028e
+
+s2_coef82:
+  .quad 0x0000029100000290
+  .quad 0x0000029300000292
+  .quad 0x0000029500000294
+  .quad 0x0000029700000296
+
+s2_coef83:
+  .quad 0x0000029900000298
+  .quad 0x0000029b0000029a
+  .quad 0x0000029d0000029c
+  .quad 0x0000029f0000029e
+
+s2_coef84:
+  .quad 0x000002a1000002a0
+  .quad 0x000002a3000002a2
+  .quad 0x000002a5000002a4
+  .quad 0x000002a7000002a6
+
+s2_coef85:
+  .quad 0x000002a9000002a8
+  .quad 0x000002ab000002aa
+  .quad 0x000002ad000002ac
+  .quad 0x000002af000002ae
+
+s2_coef86:
+  .quad 0x000002b1000002b0
+  .quad 0x000002b3000002b2
+  .quad 0x000002b5000002b4
+  .quad 0x000002b7000002b6
+
+s2_coef87:
+  .quad 0x000002b9000002b8
+  .quad 0x000002bb000002ba
+  .quad 0x000002bd000002bc
+  .quad 0x000002bf000002be
+
+s2_coef88:
+  .quad 0x000002c1000002c0
+  .quad 0x000002c3000002c2
+  .quad 0x000002c5000002c4
+  .quad 0x000002c7000002c6
+
+s2_coef89:
+  .quad 0x000002c9000002c8
+  .quad 0x000002cb000002ca
+  .quad 0x000002cd000002cc
+  .quad 0x000002cf000002ce
+
+s2_coef90:
+  .quad 0x000002d1000002d0
+  .quad 0x000002d3000002d2
+  .quad 0x000002d5000002d4
+  .quad 0x000002d7000002d6
+
+s2_coef91:
+  .quad 0x000002d9000002d8
+  .quad 0x000002db000002da
+  .quad 0x000002dd000002dc
+  .quad 0x000002df000002de
+
+s2_coef92:
+  .quad 0x000002e1000002e0
+  .quad 0x000002e3000002e2
+  .quad 0x000002e5000002e4
+  .quad 0x000002e7000002e6
+
+s2_coef93:
+  .quad 0x000002e9000002e8
+  .quad 0x000002eb000002ea
+  .quad 0x000002ed000002ec
+  .quad 0x000002ef000002ee
+
+s2_coef94:
+  .quad 0x000002f1000002f0
+  .quad 0x000002f3000002f2
+  .quad 0x000002f5000002f4
+  .quad 0x000002f7000002f6
+
+s2_coef95:
+  .quad 0x000002f9000002f8
+  .quad 0x000002fb000002fa
+  .quad 0x000002fd000002fc
+  .quad 0x000002ff000002fe
+
+s2_coef96:
+  .quad 0x0000030100000300
+  .quad 0x0000030300000302
+  .quad 0x0000030500000304
+  .quad 0x0000030700000306
+
+s2_coef97:
+  .quad 0x0000030900000308
+  .quad 0x0000030b0000030a
+  .quad 0x0000030d0000030c
+  .quad 0x0000030f0000030e
+
+s2_coef98:
+  .quad 0x0000031100000310
+  .quad 0x0000031300000312
+  .quad 0x0000031500000314
+  .quad 0x0000031700000316
+
+s2_coef99:
+  .quad 0x0000031900000318
+  .quad 0x0000031b0000031a
+  .quad 0x0000031d0000031c
+  .quad 0x0000031f0000031e
+
+s2_coef100:
+  .quad 0x0000032100000320
+  .quad 0x0000032300000322
+  .quad 0x0000032500000324
+  .quad 0x0000032700000326
+
+s2_coef101:
+  .quad 0x0000032900000328
+  .quad 0x0000032b0000032a
+  .quad 0x0000032d0000032c
+  .quad 0x0000032f0000032e
+
+s2_coef102:
+  .quad 0x0000033100000330
+  .quad 0x0000033300000332
+  .quad 0x0000033500000334
+  .quad 0x0000033700000336
+
+s2_coef103:
+  .quad 0x0000033900000338
+  .quad 0x0000033b0000033a
+  .quad 0x0000033d0000033c
+  .quad 0x0000033f0000033e
+
+s2_coef104:
+  .quad 0x0000034100000340
+  .quad 0x0000034300000342
+  .quad 0x0000034500000344
+  .quad 0x0000034700000346
+
+s2_coef105:
+  .quad 0x0000034900000348
+  .quad 0x0000034b0000034a
+  .quad 0x0000034d0000034c
+  .quad 0x0000034f0000034e
+
+s2_coef106:
+  .quad 0x0000035100000350
+  .quad 0x0000035300000352
+  .quad 0x0000035500000354
+  .quad 0x0000035700000356
+
+s2_coef107:
+  .quad 0x0000035900000358
+  .quad 0x0000035b0000035a
+  .quad 0x0000035d0000035c
+  .quad 0x0000035f0000035e
+
+s2_coef108:
+  .quad 0x0000036100000360
+  .quad 0x0000036300000362
+  .quad 0x0000036500000364
+  .quad 0x0000036700000366
+
+s2_coef109:
+  .quad 0x0000036900000368
+  .quad 0x0000036b0000036a
+  .quad 0x0000036d0000036c
+  .quad 0x0000036f0000036e
+
+s2_coef110:
+  .quad 0x0000037100000370
+  .quad 0x0000037300000372
+  .quad 0x0000037500000374
+  .quad 0x0000037700000376
+
+s2_coef111:
+  .quad 0x0000037900000378
+  .quad 0x0000037b0000037a
+  .quad 0x0000037d0000037c
+  .quad 0x0000037f0000037e
+
+s2_coef112:
+  .quad 0x0000038100000380
+  .quad 0x0000038300000382
+  .quad 0x0000038500000384
+  .quad 0x0000038700000386
+
+s2_coef113:
+  .quad 0x0000038900000388
+  .quad 0x0000038b0000038a
+  .quad 0x0000038d0000038c
+  .quad 0x0000038f0000038e
+
+s2_coef114:
+  .quad 0x0000039100000390
+  .quad 0x0000039300000392
+  .quad 0x0000039500000394
+  .quad 0x0000039700000396
+
+s2_coef115:
+  .quad 0x0000039900000398
+  .quad 0x0000039b0000039a
+  .quad 0x0000039d0000039c
+  .quad 0x0000039f0000039e
+
+s2_coef116:
+  .quad 0x000003a1000003a0
+  .quad 0x000003a3000003a2
+  .quad 0x000003a5000003a4
+  .quad 0x000003a7000003a6
+
+s2_coef117:
+  .quad 0x000003a9000003a8
+  .quad 0x000003ab000003aa
+  .quad 0x000003ad000003ac
+  .quad 0x000003af000003ae
+
+s2_coef118:
+  .quad 0x000003b1000003b0
+  .quad 0x000003b3000003b2
+  .quad 0x000003b5000003b4
+  .quad 0x000003b7000003b6
+
+s2_coef119:
+  .quad 0x000003b9000003b8
+  .quad 0x000003bb000003ba
+  .quad 0x000003bd000003bc
+  .quad 0x000003bf000003be
+
+s2_coef120:
+  .quad 0x000003c1000003c0
+  .quad 0x000003c3000003c2
+  .quad 0x000003c5000003c4
+  .quad 0x000003c7000003c6
+
+s2_coef121:
+  .quad 0x000003c9000003c8
+  .quad 0x000003cb000003ca
+  .quad 0x000003cd000003cc
+  .quad 0x000003cf000003ce
+
+s2_coef122:
+  .quad 0x000003d1000003d0
+  .quad 0x000003d3000003d2
+  .quad 0x000003d5000003d4
+  .quad 0x000003d7000003d6
+
+s2_coef123:
+  .quad 0x000003d9000003d8
+  .quad 0x000003db000003da
+  .quad 0x000003dd000003dc
+  .quad 0x000003df000003de
+
+s2_coef124:
+  .quad 0x000003e1000003e0
+  .quad 0x000003e3000003e2
+  .quad 0x000003e5000003e4
+  .quad 0x000003e7000003e6
+
+s2_coef125:
+  .quad 0x000003e9000003e8
+  .quad 0x000003eb000003ea
+  .quad 0x000003ed000003ec
+  .quad 0x000003ef000003ee
+
+s2_coef126:
+  .quad 0x000003f1000003f0
+  .quad 0x000003f3000003f2
+  .quad 0x000003f5000003f4
+  .quad 0x000003f7000003f6
+
+s2_coef127:
+  .quad 0x000003f9000003f8
+  .quad 0x000003fb000003fa
+  .quad 0x000003fd000003fc
+  .quad 0x000003ff000003fe
+
 h_coef0:
   .quad 0x0000000100000000
   .quad 0x0000000300000002
@@ -1855,6 +2627,390 @@ h_coef63:
   .quad 0x000001fd000001fc
   .quad 0x000001ff000001fe
 
+h_coef64:
+  .quad 0x0000020100000200
+  .quad 0x0000020300000202
+  .quad 0x0000020500000204
+  .quad 0x0000020700000206
+
+h_coef65:
+  .quad 0x0000020900000208
+  .quad 0x0000020b0000020a
+  .quad 0x0000020d0000020c
+  .quad 0x0000020f0000020e
+
+h_coef66:
+  .quad 0x0000021100000210
+  .quad 0x0000021300000212
+  .quad 0x0000021500000214
+  .quad 0x0000021700000216
+
+h_coef67:
+  .quad 0x0000021900000218
+  .quad 0x0000021b0000021a
+  .quad 0x0000021d0000021c
+  .quad 0x0000021f0000021e
+
+h_coef68:
+  .quad 0x0000022100000220
+  .quad 0x0000022300000222
+  .quad 0x0000022500000224
+  .quad 0x0000022700000226
+
+h_coef69:
+  .quad 0x0000022900000228
+  .quad 0x0000022b0000022a
+  .quad 0x0000022d0000022c
+  .quad 0x0000022f0000022e
+
+h_coef70:
+  .quad 0x0000023100000230
+  .quad 0x0000023300000232
+  .quad 0x0000023500000234
+  .quad 0x0000023700000236
+
+h_coef71:
+  .quad 0x0000023900000238
+  .quad 0x0000023b0000023a
+  .quad 0x0000023d0000023c
+  .quad 0x0000023f0000023e
+
+h_coef72:
+  .quad 0x0000024100000240
+  .quad 0x0000024300000242
+  .quad 0x0000024500000244
+  .quad 0x0000024700000246
+
+h_coef73:
+  .quad 0x0000024900000248
+  .quad 0x0000024b0000024a
+  .quad 0x0000024d0000024c
+  .quad 0x0000024f0000024e
+
+h_coef74:
+  .quad 0x0000025100000250
+  .quad 0x0000025300000252
+  .quad 0x0000025500000254
+  .quad 0x0000025700000256
+
+h_coef75:
+  .quad 0x0000025900000258
+  .quad 0x0000025b0000025a
+  .quad 0x0000025d0000025c
+  .quad 0x0000025f0000025e
+
+h_coef76:
+  .quad 0x0000026100000260
+  .quad 0x0000026300000262
+  .quad 0x0000026500000264
+  .quad 0x0000026700000266
+
+h_coef77:
+  .quad 0x0000026900000268
+  .quad 0x0000026b0000026a
+  .quad 0x0000026d0000026c
+  .quad 0x0000026f0000026e
+
+h_coef78:
+  .quad 0x0000027100000270
+  .quad 0x0000027300000272
+  .quad 0x0000027500000274
+  .quad 0x0000027700000276
+
+h_coef79:
+  .quad 0x0000027900000278
+  .quad 0x0000027b0000027a
+  .quad 0x0000027d0000027c
+  .quad 0x0000027f0000027e
+
+h_coef80:
+  .quad 0x0000028100000280
+  .quad 0x0000028300000282
+  .quad 0x0000028500000284
+  .quad 0x0000028700000286
+
+h_coef81:
+  .quad 0x0000028900000288
+  .quad 0x0000028b0000028a
+  .quad 0x0000028d0000028c
+  .quad 0x0000028f0000028e
+
+h_coef82:
+  .quad 0x0000029100000290
+  .quad 0x0000029300000292
+  .quad 0x0000029500000294
+  .quad 0x0000029700000296
+
+h_coef83:
+  .quad 0x0000029900000298
+  .quad 0x0000029b0000029a
+  .quad 0x0000029d0000029c
+  .quad 0x0000029f0000029e
+
+h_coef84:
+  .quad 0x000002a1000002a0
+  .quad 0x000002a3000002a2
+  .quad 0x000002a5000002a4
+  .quad 0x000002a7000002a6
+
+h_coef85:
+  .quad 0x000002a9000002a8
+  .quad 0x000002ab000002aa
+  .quad 0x000002ad000002ac
+  .quad 0x000002af000002ae
+
+h_coef86:
+  .quad 0x000002b1000002b0
+  .quad 0x000002b3000002b2
+  .quad 0x000002b5000002b4
+  .quad 0x000002b7000002b6
+
+h_coef87:
+  .quad 0x000002b9000002b8
+  .quad 0x000002bb000002ba
+  .quad 0x000002bd000002bc
+  .quad 0x000002bf000002be
+
+h_coef88:
+  .quad 0x000002c1000002c0
+  .quad 0x000002c3000002c2
+  .quad 0x000002c5000002c4
+  .quad 0x000002c7000002c6
+
+h_coef89:
+  .quad 0x000002c9000002c8
+  .quad 0x000002cb000002ca
+  .quad 0x000002cd000002cc
+  .quad 0x000002cf000002ce
+
+h_coef90:
+  .quad 0x000002d1000002d0
+  .quad 0x000002d3000002d2
+  .quad 0x000002d5000002d4
+  .quad 0x000002d7000002d6
+
+h_coef91:
+  .quad 0x000002d9000002d8
+  .quad 0x000002db000002da
+  .quad 0x000002dd000002dc
+  .quad 0x000002df000002de
+
+h_coef92:
+  .quad 0x000002e1000002e0
+  .quad 0x000002e3000002e2
+  .quad 0x000002e5000002e4
+  .quad 0x000002e7000002e6
+
+h_coef93:
+  .quad 0x000002e9000002e8
+  .quad 0x000002eb000002ea
+  .quad 0x000002ed000002ec
+  .quad 0x000002ef000002ee
+
+h_coef94:
+  .quad 0x000002f1000002f0
+  .quad 0x000002f3000002f2
+  .quad 0x000002f5000002f4
+  .quad 0x000002f7000002f6
+
+h_coef95:
+  .quad 0x000002f9000002f8
+  .quad 0x000002fb000002fa
+  .quad 0x000002fd000002fc
+  .quad 0x000002ff000002fe
+
+h_coef96:
+  .quad 0x0000030100000300
+  .quad 0x0000030300000302
+  .quad 0x0000030500000304
+  .quad 0x0000030700000306
+
+h_coef97:
+  .quad 0x0000030900000308
+  .quad 0x0000030b0000030a
+  .quad 0x0000030d0000030c
+  .quad 0x0000030f0000030e
+
+h_coef98:
+  .quad 0x0000031100000310
+  .quad 0x0000031300000312
+  .quad 0x0000031500000314
+  .quad 0x0000031700000316
+
+h_coef99:
+  .quad 0x0000031900000318
+  .quad 0x0000031b0000031a
+  .quad 0x0000031d0000031c
+  .quad 0x0000031f0000031e
+
+h_coef100:
+  .quad 0x0000032100000320
+  .quad 0x0000032300000322
+  .quad 0x0000032500000324
+  .quad 0x0000032700000326
+
+h_coef101:
+  .quad 0x0000032900000328
+  .quad 0x0000032b0000032a
+  .quad 0x0000032d0000032c
+  .quad 0x0000032f0000032e
+
+h_coef102:
+  .quad 0x0000033100000330
+  .quad 0x0000033300000332
+  .quad 0x0000033500000334
+  .quad 0x0000033700000336
+
+h_coef103:
+  .quad 0x0000033900000338
+  .quad 0x0000033b0000033a
+  .quad 0x0000033d0000033c
+  .quad 0x0000033f0000033e
+
+h_coef104:
+  .quad 0x0000034100000340
+  .quad 0x0000034300000342
+  .quad 0x0000034500000344
+  .quad 0x0000034700000346
+
+h_coef105:
+  .quad 0x0000034900000348
+  .quad 0x0000034b0000034a
+  .quad 0x0000034d0000034c
+  .quad 0x0000034f0000034e
+
+h_coef106:
+  .quad 0x0000035100000350
+  .quad 0x0000035300000352
+  .quad 0x0000035500000354
+  .quad 0x0000035700000356
+
+h_coef107:
+  .quad 0x0000035900000358
+  .quad 0x0000035b0000035a
+  .quad 0x0000035d0000035c
+  .quad 0x0000035f0000035e
+
+h_coef108:
+  .quad 0x0000036100000360
+  .quad 0x0000036300000362
+  .quad 0x0000036500000364
+  .quad 0x0000036700000366
+
+h_coef109:
+  .quad 0x0000036900000368
+  .quad 0x0000036b0000036a
+  .quad 0x0000036d0000036c
+  .quad 0x0000036f0000036e
+
+h_coef110:
+  .quad 0x0000037100000370
+  .quad 0x0000037300000372
+  .quad 0x0000037500000374
+  .quad 0x0000037700000376
+
+h_coef111:
+  .quad 0x0000037900000378
+  .quad 0x0000037b0000037a
+  .quad 0x0000037d0000037c
+  .quad 0x0000037f0000037e
+
+h_coef112:
+  .quad 0x0000038100000380
+  .quad 0x0000038300000382
+  .quad 0x0000038500000384
+  .quad 0x0000038700000386
+
+h_coef113:
+  .quad 0x0000038900000388
+  .quad 0x0000038b0000038a
+  .quad 0x0000038d0000038c
+  .quad 0x0000038f0000038e
+
+h_coef114:
+  .quad 0x0000039100000390
+  .quad 0x0000039300000392
+  .quad 0x0000039500000394
+  .quad 0x0000039700000396
+
+h_coef115:
+  .quad 0x0000039900000398
+  .quad 0x0000039b0000039a
+  .quad 0x0000039d0000039c
+  .quad 0x0000039f0000039e
+
+h_coef116:
+  .quad 0x000003a1000003a0
+  .quad 0x000003a3000003a2
+  .quad 0x000003a5000003a4
+  .quad 0x000003a7000003a6
+
+h_coef117:
+  .quad 0x000003a9000003a8
+  .quad 0x000003ab000003aa
+  .quad 0x000003ad000003ac
+  .quad 0x000003af000003ae
+
+h_coef118:
+  .quad 0x000003b1000003b0
+  .quad 0x000003b3000003b2
+  .quad 0x000003b5000003b4
+  .quad 0x000003b7000003b6
+
+h_coef119:
+  .quad 0x000003b9000003b8
+  .quad 0x000003bb000003ba
+  .quad 0x000003bd000003bc
+  .quad 0x000003bf000003be
+
+h_coef120:
+  .quad 0x000003c1000003c0
+  .quad 0x000003c3000003c2
+  .quad 0x000003c5000003c4
+  .quad 0x000003c7000003c6
+
+h_coef121:
+  .quad 0x000003c9000003c8
+  .quad 0x000003cb000003ca
+  .quad 0x000003cd000003cc
+  .quad 0x000003cf000003ce
+
+h_coef122:
+  .quad 0x000003d1000003d0
+  .quad 0x000003d3000003d2
+  .quad 0x000003d5000003d4
+  .quad 0x000003d7000003d6
+
+h_coef123:
+  .quad 0x000003d9000003d8
+  .quad 0x000003db000003da
+  .quad 0x000003dd000003dc
+  .quad 0x000003df000003de
+
+h_coef124:
+  .quad 0x000003e1000003e0
+  .quad 0x000003e3000003e2
+  .quad 0x000003e5000003e4
+  .quad 0x000003e7000003e6
+
+h_coef125:
+  .quad 0x000003e9000003e8
+  .quad 0x000003eb000003ea
+  .quad 0x000003ed000003ec
+  .quad 0x000003ef000003ee
+
+h_coef126:
+  .quad 0x000003f1000003f0
+  .quad 0x000003f3000003f2
+  .quad 0x000003f5000003f4
+  .quad 0x000003f7000003f6
+
+h_coef127:
+  .quad 0x000003f9000003f8
+  .quad 0x000003fb000003fa
+  .quad 0x000003fd000003fc
+  .quad 0x000003ff000003fe
+
 c0_coef0:
   .quad 0x0000000100000000
   .quad 0x0000000300000002
@@ -2238,6 +3394,390 @@ c0_coef63:
   .quad 0x000001fb000001fa
   .quad 0x000001fd000001fc
   .quad 0x000001ff000001fe
+
+c0_coef64:
+  .quad 0x0000020100000200
+  .quad 0x0000020300000202
+  .quad 0x0000020500000204
+  .quad 0x0000020700000206
+
+c0_coef65:
+  .quad 0x0000020900000208
+  .quad 0x0000020b0000020a
+  .quad 0x0000020d0000020c
+  .quad 0x0000020f0000020e
+
+c0_coef66:
+  .quad 0x0000021100000210
+  .quad 0x0000021300000212
+  .quad 0x0000021500000214
+  .quad 0x0000021700000216
+
+c0_coef67:
+  .quad 0x0000021900000218
+  .quad 0x0000021b0000021a
+  .quad 0x0000021d0000021c
+  .quad 0x0000021f0000021e
+
+c0_coef68:
+  .quad 0x0000022100000220
+  .quad 0x0000022300000222
+  .quad 0x0000022500000224
+  .quad 0x0000022700000226
+
+c0_coef69:
+  .quad 0x0000022900000228
+  .quad 0x0000022b0000022a
+  .quad 0x0000022d0000022c
+  .quad 0x0000022f0000022e
+
+c0_coef70:
+  .quad 0x0000023100000230
+  .quad 0x0000023300000232
+  .quad 0x0000023500000234
+  .quad 0x0000023700000236
+
+c0_coef71:
+  .quad 0x0000023900000238
+  .quad 0x0000023b0000023a
+  .quad 0x0000023d0000023c
+  .quad 0x0000023f0000023e
+
+c0_coef72:
+  .quad 0x0000024100000240
+  .quad 0x0000024300000242
+  .quad 0x0000024500000244
+  .quad 0x0000024700000246
+
+c0_coef73:
+  .quad 0x0000024900000248
+  .quad 0x0000024b0000024a
+  .quad 0x0000024d0000024c
+  .quad 0x0000024f0000024e
+
+c0_coef74:
+  .quad 0x0000025100000250
+  .quad 0x0000025300000252
+  .quad 0x0000025500000254
+  .quad 0x0000025700000256
+
+c0_coef75:
+  .quad 0x0000025900000258
+  .quad 0x0000025b0000025a
+  .quad 0x0000025d0000025c
+  .quad 0x0000025f0000025e
+
+c0_coef76:
+  .quad 0x0000026100000260
+  .quad 0x0000026300000262
+  .quad 0x0000026500000264
+  .quad 0x0000026700000266
+
+c0_coef77:
+  .quad 0x0000026900000268
+  .quad 0x0000026b0000026a
+  .quad 0x0000026d0000026c
+  .quad 0x0000026f0000026e
+
+c0_coef78:
+  .quad 0x0000027100000270
+  .quad 0x0000027300000272
+  .quad 0x0000027500000274
+  .quad 0x0000027700000276
+
+c0_coef79:
+  .quad 0x0000027900000278
+  .quad 0x0000027b0000027a
+  .quad 0x0000027d0000027c
+  .quad 0x0000027f0000027e
+
+c0_coef80:
+  .quad 0x0000028100000280
+  .quad 0x0000028300000282
+  .quad 0x0000028500000284
+  .quad 0x0000028700000286
+
+c0_coef81:
+  .quad 0x0000028900000288
+  .quad 0x0000028b0000028a
+  .quad 0x0000028d0000028c
+  .quad 0x0000028f0000028e
+
+c0_coef82:
+  .quad 0x0000029100000290
+  .quad 0x0000029300000292
+  .quad 0x0000029500000294
+  .quad 0x0000029700000296
+
+c0_coef83:
+  .quad 0x0000029900000298
+  .quad 0x0000029b0000029a
+  .quad 0x0000029d0000029c
+  .quad 0x0000029f0000029e
+
+c0_coef84:
+  .quad 0x000002a1000002a0
+  .quad 0x000002a3000002a2
+  .quad 0x000002a5000002a4
+  .quad 0x000002a7000002a6
+
+c0_coef85:
+  .quad 0x000002a9000002a8
+  .quad 0x000002ab000002aa
+  .quad 0x000002ad000002ac
+  .quad 0x000002af000002ae
+
+c0_coef86:
+  .quad 0x000002b1000002b0
+  .quad 0x000002b3000002b2
+  .quad 0x000002b5000002b4
+  .quad 0x000002b7000002b6
+
+c0_coef87:
+  .quad 0x000002b9000002b8
+  .quad 0x000002bb000002ba
+  .quad 0x000002bd000002bc
+  .quad 0x000002bf000002be
+
+c0_coef88:
+  .quad 0x000002c1000002c0
+  .quad 0x000002c3000002c2
+  .quad 0x000002c5000002c4
+  .quad 0x000002c7000002c6
+
+c0_coef89:
+  .quad 0x000002c9000002c8
+  .quad 0x000002cb000002ca
+  .quad 0x000002cd000002cc
+  .quad 0x000002cf000002ce
+
+c0_coef90:
+  .quad 0x000002d1000002d0
+  .quad 0x000002d3000002d2
+  .quad 0x000002d5000002d4
+  .quad 0x000002d7000002d6
+
+c0_coef91:
+  .quad 0x000002d9000002d8
+  .quad 0x000002db000002da
+  .quad 0x000002dd000002dc
+  .quad 0x000002df000002de
+
+c0_coef92:
+  .quad 0x000002e1000002e0
+  .quad 0x000002e3000002e2
+  .quad 0x000002e5000002e4
+  .quad 0x000002e7000002e6
+
+c0_coef93:
+  .quad 0x000002e9000002e8
+  .quad 0x000002eb000002ea
+  .quad 0x000002ed000002ec
+  .quad 0x000002ef000002ee
+
+c0_coef94:
+  .quad 0x000002f1000002f0
+  .quad 0x000002f3000002f2
+  .quad 0x000002f5000002f4
+  .quad 0x000002f7000002f6
+
+c0_coef95:
+  .quad 0x000002f9000002f8
+  .quad 0x000002fb000002fa
+  .quad 0x000002fd000002fc
+  .quad 0x000002ff000002fe
+
+c0_coef96:
+  .quad 0x0000030100000300
+  .quad 0x0000030300000302
+  .quad 0x0000030500000304
+  .quad 0x0000030700000306
+
+c0_coef97:
+  .quad 0x0000030900000308
+  .quad 0x0000030b0000030a
+  .quad 0x0000030d0000030c
+  .quad 0x0000030f0000030e
+
+c0_coef98:
+  .quad 0x0000031100000310
+  .quad 0x0000031300000312
+  .quad 0x0000031500000314
+  .quad 0x0000031700000316
+
+c0_coef99:
+  .quad 0x0000031900000318
+  .quad 0x0000031b0000031a
+  .quad 0x0000031d0000031c
+  .quad 0x0000031f0000031e
+
+c0_coef100:
+  .quad 0x0000032100000320
+  .quad 0x0000032300000322
+  .quad 0x0000032500000324
+  .quad 0x0000032700000326
+
+c0_coef101:
+  .quad 0x0000032900000328
+  .quad 0x0000032b0000032a
+  .quad 0x0000032d0000032c
+  .quad 0x0000032f0000032e
+
+c0_coef102:
+  .quad 0x0000033100000330
+  .quad 0x0000033300000332
+  .quad 0x0000033500000334
+  .quad 0x0000033700000336
+
+c0_coef103:
+  .quad 0x0000033900000338
+  .quad 0x0000033b0000033a
+  .quad 0x0000033d0000033c
+  .quad 0x0000033f0000033e
+
+c0_coef104:
+  .quad 0x0000034100000340
+  .quad 0x0000034300000342
+  .quad 0x0000034500000344
+  .quad 0x0000034700000346
+
+c0_coef105:
+  .quad 0x0000034900000348
+  .quad 0x0000034b0000034a
+  .quad 0x0000034d0000034c
+  .quad 0x0000034f0000034e
+
+c0_coef106:
+  .quad 0x0000035100000350
+  .quad 0x0000035300000352
+  .quad 0x0000035500000354
+  .quad 0x0000035700000356
+
+c0_coef107:
+  .quad 0x0000035900000358
+  .quad 0x0000035b0000035a
+  .quad 0x0000035d0000035c
+  .quad 0x0000035f0000035e
+
+c0_coef108:
+  .quad 0x0000036100000360
+  .quad 0x0000036300000362
+  .quad 0x0000036500000364
+  .quad 0x0000036700000366
+
+c0_coef109:
+  .quad 0x0000036900000368
+  .quad 0x0000036b0000036a
+  .quad 0x0000036d0000036c
+  .quad 0x0000036f0000036e
+
+c0_coef110:
+  .quad 0x0000037100000370
+  .quad 0x0000037300000372
+  .quad 0x0000037500000374
+  .quad 0x0000037700000376
+
+c0_coef111:
+  .quad 0x0000037900000378
+  .quad 0x0000037b0000037a
+  .quad 0x0000037d0000037c
+  .quad 0x0000037f0000037e
+
+c0_coef112:
+  .quad 0x0000038100000380
+  .quad 0x0000038300000382
+  .quad 0x0000038500000384
+  .quad 0x0000038700000386
+
+c0_coef113:
+  .quad 0x0000038900000388
+  .quad 0x0000038b0000038a
+  .quad 0x0000038d0000038c
+  .quad 0x0000038f0000038e
+
+c0_coef114:
+  .quad 0x0000039100000390
+  .quad 0x0000039300000392
+  .quad 0x0000039500000394
+  .quad 0x0000039700000396
+
+c0_coef115:
+  .quad 0x0000039900000398
+  .quad 0x0000039b0000039a
+  .quad 0x0000039d0000039c
+  .quad 0x0000039f0000039e
+
+c0_coef116:
+  .quad 0x000003a1000003a0
+  .quad 0x000003a3000003a2
+  .quad 0x000003a5000003a4
+  .quad 0x000003a7000003a6
+
+c0_coef117:
+  .quad 0x000003a9000003a8
+  .quad 0x000003ab000003aa
+  .quad 0x000003ad000003ac
+  .quad 0x000003af000003ae
+
+c0_coef118:
+  .quad 0x000003b1000003b0
+  .quad 0x000003b3000003b2
+  .quad 0x000003b5000003b4
+  .quad 0x000003b7000003b6
+
+c0_coef119:
+  .quad 0x000003b9000003b8
+  .quad 0x000003bb000003ba
+  .quad 0x000003bd000003bc
+  .quad 0x000003bf000003be
+
+c0_coef120:
+  .quad 0x000003c1000003c0
+  .quad 0x000003c3000003c2
+  .quad 0x000003c5000003c4
+  .quad 0x000003c7000003c6
+
+c0_coef121:
+  .quad 0x000003c9000003c8
+  .quad 0x000003cb000003ca
+  .quad 0x000003cd000003cc
+  .quad 0x000003cf000003ce
+
+c0_coef122:
+  .quad 0x000003d1000003d0
+  .quad 0x000003d3000003d2
+  .quad 0x000003d5000003d4
+  .quad 0x000003d7000003d6
+
+c0_coef123:
+  .quad 0x000003d9000003d8
+  .quad 0x000003db000003da
+  .quad 0x000003dd000003dc
+  .quad 0x000003df000003de
+
+c0_coef124:
+  .quad 0x000003e1000003e0
+  .quad 0x000003e3000003e2
+  .quad 0x000003e5000003e4
+  .quad 0x000003e7000003e6
+
+c0_coef125:
+  .quad 0x000003e9000003e8
+  .quad 0x000003eb000003ea
+  .quad 0x000003ed000003ec
+  .quad 0x000003ef000003ee
+
+c0_coef126:
+  .quad 0x000003f1000003f0
+  .quad 0x000003f3000003f2
+  .quad 0x000003f5000003f4
+  .quad 0x000003f7000003f6
+
+c0_coef127:
+  .quad 0x000003f9000003f8
+  .quad 0x000003fb000003fa
+  .quad 0x000003fd000003fc
+  .quad 0x000003ff000003fe
 
 tt_coef0:
   .quad 0x0000263d000022a1

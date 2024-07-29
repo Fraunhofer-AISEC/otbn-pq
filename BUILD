@@ -7,6 +7,6 @@ package(default_visibility = ["//visibility:public"])
 filegroup(
     name = "all_files",
     srcs = glob(["**"]) + [
-        "//hw/ip/otbn_pq/data:all_files",
+        "//hw/vendor/otbn_pq/data:all_files",
     ],
 )

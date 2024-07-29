@@ -73,6 +73,12 @@ module tb_otbn
     integer                                     cc_count_dilithium_3;
     integer                                     cc_count_dilithium_5;
 
+    integer                                     cc_count_falcon512_0;
+    integer                                     cc_count_falcon512_1;
+
+    integer                                     cc_count_falcon1024_0;
+    integer                                     cc_count_falcon1024_1;
+
     logic                       [31:0]          rdbk;
     string                                      teststate;  
     integer                                     error_count;
@@ -288,11 +294,17 @@ module tb_otbn
 	    $display("Begin Testcase 0000: MUL256\n");	
         `include "testcase0000.sv"
         
-           $display("Begin Testcase 300: NTT Falcon-512 Indirect Reg Addr\n");	
-       `include "testcase0300.sv"
+//           $display("Begin Testcase 300: Falcon-512 Invalid Signature\n");	
+//       `include "testcase0300.sv"
 
-           $display("Begin Testcase 301: NTT Falcon-512 Indirect Reg Addr\n");	
-       `include "testcase0301.sv"
+//           $display("Begin Testcase 301: Falcon-512 Valid Signature r\n");	
+//       `include "testcase0301.sv"
+
+//           $display("Begin Testcase 302: Falcon-1024 Invalid Signature\n");	
+//       `include "testcase0302.sv"
+
+           $display("Begin Testcase 303: Falcon-1024 Vvalid Signature\n");	
+       `include "testcase0303.sv"
 
 //	    $display("Begin Testcase 0001: Access of PQSPR\n");	
 //       `include "testcase0001.sv"
@@ -539,6 +551,23 @@ module tb_otbn
         $fwrite(f,"Dilithium-V Performance in CC : %d \n", cc_count_dilithium_5);
         $fwrite(f,"----------------------------------------------------------------\n"); 
 
+        $fwrite(f,"----------------------------------------------------------------\n");           
+        $fwrite(f,"Falcon-512 Invalid Signature Performance in CC : %d \n", cc_count_falcon512_0);
+        $fwrite(f,"----------------------------------------------------------------\n"); 
+
+        $fwrite(f,"----------------------------------------------------------------\n");           
+        $fwrite(f,"Falcon-512 Valid Signature Performance in CC : %d \n", cc_count_falcon512_1);
+        $fwrite(f,"----------------------------------------------------------------\n"); 
+        
+        $fwrite(f,"----------------------------------------------------------------\n");           
+        $fwrite(f,"Falcon-1024 Invalid Signature Performance in CC : %d \n", cc_count_falcon1024_0);
+        $fwrite(f,"----------------------------------------------------------------\n"); 
+        
+        $fwrite(f,"----------------------------------------------------------------\n");           
+        $fwrite(f,"Falcon-1024 Valid Signature Performance in CC : %d \n", cc_count_falcon1024_1);
+        $fwrite(f,"----------------------------------------------------------------\n"); 
+        
+        
         $fwrite(f,"----------------------------------------------------------------\n");           
         $fwrite(f,"Errors: %d \n",error_count);
         $fwrite(f,"----------------------------------------------------------------\n");  

@@ -340,7 +340,7 @@ module otbn_twiddle_update
 
     always_comb begin
       prime_no_intg_d = '0;
-
+      prime_intg_d = prime_intg_calc;   
       unique case (1'b1)
           ispr_init_i: prime_intg_d = EccZeroWord; 
           ispr_base_wr_en_i[0]: begin
@@ -383,7 +383,7 @@ module otbn_twiddle_update
 
     always_comb begin
       prime_dash_no_intg_d = '0;
-
+      prime_dash_intg_d = prime_dash_intg_calc;      
       unique case (1'b1)
           ispr_init_i: prime_dash_intg_d = EccZeroWord; 
           ispr_base_wr_en_i[0]: begin
@@ -426,7 +426,7 @@ module otbn_twiddle_update
 
     always_comb begin
       twiddle_no_intg_d = '0;
-
+      twiddle_intg_d = twiddle_intg_calc;    
       unique case (1'b1)
           ispr_init_i: twiddle_intg_d = EccZeroWord; 
           ispr_base_wr_en_i[0]: begin
@@ -486,7 +486,7 @@ module otbn_twiddle_update
 
       always_comb begin
         omega_no_intg_d[i_word*32+:32] = '0;
-
+        omega_intg_d[i_word*39+:39]  = omega_intg_calc[i_word*39+:39] ;   
         unique case (1'b1)
             ispr_init_i: omega_intg_d[i_word*39+:39] = EccZeroWord; 
             ispr_base_wr_en_i[i_word]: begin
@@ -537,7 +537,7 @@ module otbn_twiddle_update
 
       always_comb begin
         psi_no_intg_d[i_word*32+:32] = '0;
-
+        psi_intg_d[i_word*39+:39]  = psi_intg_calc[i_word*39+:39] ;
         unique case (1'b1)
             ispr_init_i: psi_intg_d[i_word*39+:39] = EccZeroWord; 
             ispr_base_wr_en_i[i_word]: begin
@@ -587,7 +587,7 @@ module otbn_twiddle_update
 
     always_comb begin
       omega_idx_no_intg_d = '0;
-
+      omega_idx_intg_d = omega_idx_intg_calc;
       unique case (1'b1)
           ispr_init_i: omega_idx_intg_d = EccZeroWord; 
           ispr_base_wr_en_i[0]: begin
@@ -637,7 +637,7 @@ module otbn_twiddle_update
 
     always_comb begin
       psi_idx_no_intg_d = '0;
-
+      psi_idx_intg_d = psi_idx_intg_calc;
       unique case (1'b1)
           ispr_init_i: psi_idx_intg_d = EccZeroWord; 
           ispr_base_wr_en_i[0]: begin
@@ -685,7 +685,7 @@ module otbn_twiddle_update
 
     always_comb begin
       const_no_intg_d = '0;
-
+      const_intg_d = const_intg_calc;  
       unique case (1'b1)
           ispr_init_i: const_intg_d = EccZeroWord; 
           ispr_base_wr_en_i[0]: begin
@@ -729,7 +729,7 @@ module otbn_twiddle_update
 
       always_comb begin
         rc_no_intg_d[i_word*32+:32] = '0;
-
+        rc_intg_d[i_word*39+:39]  = rc_intg_calc[i_word*39+:39] ; 
         unique case (1'b1)
             ispr_init_i: rc_intg_d[i_word*39+:39] = EccZeroWord; 
             ispr_base_wr_en_i[i_word]: begin
@@ -774,7 +774,7 @@ module otbn_twiddle_update
 
     always_comb begin
       rc_idx_no_intg_d = '0;
-
+      rc_idx_intg_d = rc_idx_intg_calc; 
       unique case (1'b1)
           ispr_init_i: rc_idx_intg_d = EccZeroWord; 
           ispr_base_wr_en_i[0]: begin

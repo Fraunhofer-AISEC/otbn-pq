@@ -193,7 +193,7 @@ module otbn_reg_addr_unit
 
     always_comb begin
       m_no_intg_d = '0;
-
+      m_intg_d = m_intg_calc;
       unique case (1'b1)
           ispr_init_i: m_intg_d = EccZeroWord; 
           ispr_base_wr_en_i[0]: begin
@@ -236,7 +236,7 @@ module otbn_reg_addr_unit
 
     always_comb begin
       j2_no_intg_d = '0;
-
+      j2_intg_d = j2_intg_calc;
       unique case (1'b1)
           ispr_init_i: j2_intg_d = EccZeroWord; 
           ispr_base_wr_en_i[0]: begin
@@ -279,7 +279,7 @@ module otbn_reg_addr_unit
 
     always_comb begin
       j_no_intg_d = '0;
-
+      j_intg_d = j_intg_calc;
       unique case (1'b1)
           ispr_init_i: j_intg_d = EccZeroWord; 
           ispr_base_wr_en_i[0]: begin
@@ -322,7 +322,7 @@ module otbn_reg_addr_unit
 
     always_comb begin
       idx0_no_intg_d = '0;
-
+      idx0_intg_d = idx0_intg_calc;
       unique case (1'b1)
           ispr_init_i: idx0_intg_d = EccZeroWord; 
           ispr_base_wr_en_i[0]: begin
@@ -369,7 +369,7 @@ module otbn_reg_addr_unit
 
     always_comb begin
       idx1_no_intg_d = '0;
-
+      idx1_intg_d = idx0_intg_calc;
       unique case (1'b1)
           ispr_init_i: idx1_intg_d = EccZeroWord; 
           ispr_base_wr_en_i[0]: begin
@@ -417,7 +417,7 @@ module otbn_reg_addr_unit
 
     always_comb begin
       mode_no_intg_d = '0;
-
+      mode_intg_d = mode_intg_calc;
       unique case (1'b1)
           ispr_init_i: mode_intg_d = EccZeroWord; 
           ispr_base_wr_en_i[0]: begin
@@ -462,7 +462,7 @@ module otbn_reg_addr_unit
 
     always_comb begin
       x_no_intg_d = '0;
-
+      x_intg_d = x_intg_calc;
       unique case (1'b1)
           ispr_init_i: x_intg_d = EccZeroWord; 
           ispr_base_wr_en_i[0]: begin
@@ -507,7 +507,7 @@ module otbn_reg_addr_unit
 
     always_comb begin
       y_no_intg_d = '0;
-
+      y_intg_d = y_intg_calc;
       unique case (1'b1)
           ispr_init_i: y_intg_d = EccZeroWord; 
           ispr_base_wr_en_i[0]: begin

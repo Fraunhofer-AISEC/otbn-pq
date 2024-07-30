@@ -1013,6 +1013,7 @@ ret
 .section .data
 
 /* Constants */
+.globl prime
 prime:
   .quad 0x0000000000003001
   .quad 0x0000000000000000
@@ -1113,6 +1114,7 @@ r_dash:
   .quad 0x0000000000000000
   .quad 0x0000000000000000
 
+.globl s2_coef0
 s2_coef0: 
 .word 0x5f
 .word 0x67
@@ -1626,6 +1628,8 @@ s2_coef0:
 .word 0xffffffaa
 .word 0x4c
 .word 0x8d
+
+.globl h_coef0
 h_coef0: 
 .word 0x1924
 .word 0x1564
@@ -2139,6 +2143,8 @@ h_coef0:
 .word 0x7dd
 .word 0x1635
 .word 0x2c69
+
+.globl c0_coef0
 c0_coef0: 
 .word 0x142b
 .word 0x1e63

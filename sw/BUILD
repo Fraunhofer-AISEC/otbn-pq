@@ -2,7 +2,7 @@
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
-load("//rules:otbn.bzl", "otbn_binary", "otbn_library")
+load("//rules:otbn.bzl", "otbn_binary")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -12,18 +12,35 @@ otbn_binary(
         "pq_dilithium-2-valid.s",
     ],
 )
+
 otbn_binary(
     name = "otbn_dilithium3_verify",
     srcs = [
         "pq_dilithium-3-valid.s",
     ],
 )
+
 otbn_binary(
     name = "otbn_dilithium5_verify",
     srcs = [
         "pq_dilithium-5-valid.s",
     ],
 )
+
+otbn_binary(
+    name = "otbn_falcon512_verify",
+    srcs = [
+        "pq_falcon512-valid.s",
+    ],
+)
+
+otbn_binary(
+    name = "otbn_falcon1024_verify",
+    srcs = [
+        "pq_falcon1024-valid.s",
+    ],
+)
+
 otbn_binary(
    name = "otbn_pq_add",
    srcs = [

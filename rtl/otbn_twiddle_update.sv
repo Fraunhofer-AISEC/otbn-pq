@@ -488,7 +488,7 @@ module otbn_twiddle_update
         omega_no_intg_d[i_word*32+:32] = '0;
 
         unique case (1'b1)
-            ispr_init_i: omega_intg_d[i_word*32+:32] = EccZeroWord; 
+            ispr_init_i: omega_intg_d[i_word*39+:39] = EccZeroWord; 
             ispr_base_wr_en_i[i_word]: begin
               omega_no_intg_d[i_word*32+:32] = ispr_base_wdata_i;
               omega_intg_d[i_word*39+:39]  = omega_intg_calc[i_word*39+:39] ;
@@ -539,7 +539,7 @@ module otbn_twiddle_update
         psi_no_intg_d[i_word*32+:32] = '0;
 
         unique case (1'b1)
-            ispr_init_i: psi_intg_d[i_word*32+:32] = EccZeroWord; 
+            ispr_init_i: psi_intg_d[i_word*39+:39] = EccZeroWord; 
             ispr_base_wr_en_i[i_word]: begin
               psi_no_intg_d[i_word*32+:32] = ispr_base_wdata_i;
               psi_intg_d[i_word*39+:39]  = psi_intg_calc[i_word*39+:39] ;
@@ -731,7 +731,7 @@ module otbn_twiddle_update
         rc_no_intg_d[i_word*32+:32] = '0;
 
         unique case (1'b1)
-            ispr_init_i: rc_intg_d[i_word*32+:32] = EccZeroWord; 
+            ispr_init_i: rc_intg_d[i_word*39+:39] = EccZeroWord; 
             ispr_base_wr_en_i[i_word]: begin
               rc_no_intg_d[i_word*32+:32] = ispr_base_wdata_i;
               rc_intg_d[i_word*39+:39]  = rc_intg_calc[i_word*39+:39] ;

@@ -4,7 +4,7 @@
 
 
 /* Falcon-512 Verify Implementation */
-.section .text
+.section.text.start
 
 /*************************************************/
 /*  Reduce s2 elements modulo q ([0..q-1] range) */

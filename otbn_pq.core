@@ -240,3 +240,68 @@ targets:
     tools:
       vivado:
         part: "xc7k160tfbg676-1" # CW310 with K410T
+
+  syn_pq_alu:
+    filesets:
+      - tool_verilator ? (files_verilator_waiver)
+      - tool_ascentlint ? (files_ascentlint_waiver)
+      - files_rtl_core
+      - files_rtl_top
+    toplevel: otbn_pq_alu
+    parameters:
+      - SYNTHESIS=true
+    tools:
+      vivado:
+        part: "xc7k160tfbg676-1" # CW310 with K410T
+
+  syn_pq_rau:
+    filesets:
+      - tool_verilator ? (files_verilator_waiver)
+      - tool_ascentlint ? (files_ascentlint_waiver)
+      - files_rtl_core
+      - files_rtl_top
+    toplevel: otbn_reg_addr_unit
+    parameters:
+      - SYNTHESIS=true
+    tools:
+      vivado:
+        part: "xc7k160tfbg676-1" # CW310 with K410T
+
+  syn_pq_trcu:
+    filesets:
+      - tool_verilator ? (files_verilator_waiver)
+      - tool_ascentlint ? (files_ascentlint_waiver)
+      - files_rtl_core
+      - files_rtl_top
+    toplevel: otbn_twiddle_update
+    parameters:
+      - SYNTHESIS=true
+    tools:
+      vivado:
+        part: "xc7k160tfbg676-1" # CW310 with K410T
+
+  syn_pq_kpu:
+    filesets:
+      - tool_verilator ? (files_verilator_waiver)
+      - tool_ascentlint ? (files_ascentlint_waiver)
+      - files_rtl_core
+      - files_rtl_top
+    toplevel: otbn_keccak_plane_unit
+    parameters:
+      - SYNTHESIS=true
+    tools:
+      vivado:
+        part: "xc7k160tfbg676-1" # CW310 with K410T
+
+  syn_pq_klu:
+    filesets:
+      - tool_verilator ? (files_verilator_waiver)
+      - tool_ascentlint ? (files_ascentlint_waiver)
+      - files_rtl_core
+      - files_rtl_top
+    toplevel: otbn_keccak_lane_unit
+    parameters:
+      - SYNTHESIS=true
+    tools:
+      vivado:
+        part: "xc7k160tfbg676-1" # CW310 with K410T

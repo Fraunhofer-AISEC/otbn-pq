@@ -97,7 +97,58 @@ module otbn_twiddle_update
     logic [ExtPQLEN-1:0]                     rc_idx_intg_d;
     logic [1:0]                     rc_idx_inc;
     logic                           rc_idx_wr_en;
-    
+
+  // Integrity Signals
+  logic [PQLEN-1:0]                prime_no_intg_d;
+  logic [PQLEN-1:0]                prime_no_intg_q;
+  logic [ExtPQLEN-1:0]             prime_intg_calc;
+  logic [1:0]                      prime_intg_err;
+
+  logic [PQLEN-1:0]                prime_dash_no_intg_d;
+  logic [PQLEN-1:0]                prime_dash_no_intg_q;
+  logic [ExtPQLEN-1:0]             prime_dash_intg_calc;
+  logic [1:0]                      prime_dash_intg_err;
+
+  logic [PQLEN-1:0]                twiddle_no_intg_d;
+  logic [PQLEN-1:0]                twiddle_no_intg_q;
+  logic [ExtPQLEN-1:0]             twiddle_intg_calc;
+  logic [1:0]                      twiddle_intg_err;
+
+  logic [WLEN-1:0]                omega_no_intg_d;
+  logic [WLEN-1:0]                omega_no_intg_q;
+  logic [ExtWLEN-1:0]             omega_intg_calc;
+  logic [2*BaseWordsPerWLEN-1:0]  omega_intg_err;
+
+  logic [WLEN-1:0]                psi_no_intg_d;
+  logic [WLEN-1:0]                psi_no_intg_q;
+  logic [ExtWLEN-1:0]             psi_intg_calc;
+  logic [2*BaseWordsPerWLEN-1:0]  psi_intg_err;
+
+  logic [PQLEN-1:0]                const_no_intg_d;
+  logic [PQLEN-1:0]                const_no_intg_q;
+  logic [ExtPQLEN-1:0]             const_intg_calc;
+  logic [1:0]                      const_intg_err;
+
+  logic [WLEN-1:0]                rc_no_intg_d;
+  logic [WLEN-1:0]                rc_no_intg_q;
+  logic [ExtWLEN-1:0]             rc_intg_calc;
+  logic [2*BaseWordsPerWLEN-1:0]  rc_intg_err;
+
+  logic [PQLEN-1:0]                omega_idx_no_intg_d;
+  logic [PQLEN-1:0]                omega_idx_no_intg_q;
+  logic [ExtPQLEN-1:0]             omega_idx_intg_calc;
+  logic [1:0]                      omega_idx_intg_err;
+
+  logic [PQLEN-1:0]                psi_idx_no_intg_d;
+  logic [PQLEN-1:0]                psi_idx_no_intg_q;
+  logic [ExtPQLEN-1:0]             psi_idx_intg_calc;
+  logic [1:0]                      psi_idx_intg_err;
+
+  logic [PQLEN-1:0]                rc_idx_no_intg_d;
+  logic [PQLEN-1:0]                rc_idx_no_intg_q;
+  logic [ExtPQLEN-1:0]             rc_idx_intg_calc;
+  logic [1:0]                      rc_idx_intg_err;
+
     always_comb begin
         omega = '0;
         psi = '0;
@@ -201,57 +252,6 @@ module otbn_twiddle_update
             default: omega_onehot = 8'b00000000;
         endcase   
     end
-
-  // Integrity Signals
-  logic [PQLEN-1:0]                prime_no_intg_d;
-  logic [PQLEN-1:0]                prime_no_intg_q;
-  logic [ExtPQLEN-1:0]             prime_intg_calc;
-  logic [1:0]                      prime_intg_err;
-
-  logic [PQLEN-1:0]                prime_dash_no_intg_d;
-  logic [PQLEN-1:0]                prime_dash_no_intg_q;
-  logic [ExtPQLEN-1:0]             prime_dash_intg_calc;
-  logic [1:0]                      prime_dash_intg_err;
-
-  logic [PQLEN-1:0]                twiddle_no_intg_d;
-  logic [PQLEN-1:0]                twiddle_no_intg_q;
-  logic [ExtPQLEN-1:0]             twiddle_intg_calc;
-  logic [1:0]                      twiddle_intg_err;
-
-  logic [WLEN-1:0]                omega_no_intg_d;
-  logic [WLEN-1:0]                omega_no_intg_q;
-  logic [ExtWLEN-1:0]             omega_intg_calc;
-  logic [2*BaseWordsPerWLEN-1:0]  omega_intg_err;
-
-  logic [WLEN-1:0]                psi_no_intg_d;
-  logic [WLEN-1:0]                psi_no_intg_q;
-  logic [ExtWLEN-1:0]             psi_intg_calc;
-  logic [2*BaseWordsPerWLEN-1:0]  psi_intg_err;
-
-  logic [PQLEN-1:0]                const_no_intg_d;
-  logic [PQLEN-1:0]                const_no_intg_q;
-  logic [ExtPQLEN-1:0]             const_intg_calc;
-  logic [1:0]                      const_intg_err;
-
-  logic [WLEN-1:0]                rc_no_intg_d;
-  logic [WLEN-1:0]                rc_no_intg_q;
-  logic [ExtWLEN-1:0]             rc_intg_calc;
-  logic [2*BaseWordsPerWLEN-1:0]  rc_intg_err;
-
-  logic [PQLEN-1:0]                omega_idx_no_intg_d;
-  logic [PQLEN-1:0]                omega_idx_no_intg_q;
-  logic [ExtPQLEN-1:0]             omega_idx_intg_calc;
-  logic [1:0]                      omega_idx_intg_err;
-
-  logic [PQLEN-1:0]                psi_idx_no_intg_d;
-  logic [PQLEN-1:0]                psi_idx_no_intg_q;
-  logic [ExtPQLEN-1:0]             psi_idx_intg_calc;
-  logic [1:0]                      psi_idx_intg_err;
-
-  logic [PQLEN-1:0]                rc_idx_no_intg_d;
-  logic [PQLEN-1:0]                rc_idx_no_intg_q;
-  logic [ExtPQLEN-1:0]             rc_idx_intg_calc;
-  logic [1:0]                      rc_idx_intg_err;
 
   // Blanking for Update Twiddle
   logic [PQLEN-1:0] upd_twiddle_op_a_blanked;

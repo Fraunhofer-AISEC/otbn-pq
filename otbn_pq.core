@@ -235,7 +235,6 @@ targets:
     default_tool: icarus
     parameters:
       - SYNTHESIS=true
-      - SYNTHESIS_MEMORY_BLACK_BOXING=false
       - RegFile=RegFileFPGA
     tools:
       vivado:

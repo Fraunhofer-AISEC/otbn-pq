@@ -3,17 +3,27 @@
 
 This code has been published as part of the following conference paper: [Enabling Lattice-Based Post-Quantum Cryptography on the OpenTitan Platform](https://dl.acm.org/doi/10.1145/3605769.3623993). Further below you can find the original README of the OTBN.
 
-This version of the OTBN with PQ-Extension works with the [Earlgrey-PROD-M3-RC1 Release](https://github.com/lowRISC/opentitan/releases/tag/Earlgrey-PROD-M3-RC1) (Commit **49d4e53**) of the OpenTitan.
+This version of the OTBN with PQ-Extension works with the [Earlgrey-PROD.M5 Release](https://github.com/lowRISC/opentitan/releases/tag/Earlgrey-PROD-M5) (Commit **cb7dbb5**) of the OpenTitan.
 
 To checkout this commit/tag use the following command:
 ```console
-git checkout 49d4e53
+git checkout cb7dbb5
 ```
+
+## Setup
+
+Clone this repository into opentitan/hw/vendor/
+
+The following commit is needed for otbn-pq:
+```console
+git checkout 96ff63ac
+```
+
 ## Synthesize OTBN-PQ Standalone
 
 With the following commands a build script for standalone test synthesis for the OTBN-PQ for Vivado is generated:
 ```console
-fusesoc --cores-root . run --flag=fileset_top --target=synth --no-export --setup aisec:ip:otbn_pq:0.1
+fusesoc --cores-root . run --flag=fileset_top --target=syn --tool=vivado --no-export --setup aisec:ip:otbn_pq:0.1
 cd build/aisec_ip_otbn_pq_0.1/synth-vivado/
 . /tools/Xilinx/Vivado/2020.2/settings64.sh
 vivado
@@ -55,10 +65,10 @@ set_property top_lib xil_defaultlib [get_filesets sim_1]
 set_property -name {xsim.simulate.runtime} -value {5000000ns} -objects [get_filesets sim_1]
 ```
 
-To generate the IMEM and DMEM contents for the RTL-testbench, execute the following bash script:
+To generate the IMEM and DMEM contents for the RTL-testbench, execute the following bash script (not in vivado):
 
 ```console
-cd hw/vendor/aisec_otbn_pq
+cd hw/vendor/otbn-pq
 dv/sv/gen_mem_files.sh
 ```
 

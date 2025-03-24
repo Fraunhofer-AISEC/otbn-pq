@@ -6,8 +6,19 @@
 
 # Script to autogenerate memory contents for RTL testbench
 
+# Check if mem folder exists
+DIR="dv/sv/mem"
+
+if [ ! -d "$DIR" ]
+then
+    echo "Directory $DIR does not exist."
+    mkdir -p "$DIR"
+    echo "Directory $DIR created."
+fi
+
 # Search for assembly software code to generate imem and dmem contents
 search_dir=sw
+
 for entry in "$search_dir"/*
 do
   if [[ $entry == *.s ]]

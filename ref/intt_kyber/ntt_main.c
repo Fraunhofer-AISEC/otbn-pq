@@ -11,7 +11,7 @@ int main(int argc, char **argv) {
   pcount_reset();
   
 
-  int32_t a[256];
+  int16_t a[256];
 
   puts("Kyber INTT Performance Test\n");
   // Initialize poly
